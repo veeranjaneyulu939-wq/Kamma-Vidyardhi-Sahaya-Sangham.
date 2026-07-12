@@ -223,6 +223,7 @@ const Admin = () => {
                       <th style={{ padding: '1rem' }}>Name</th>
                       <th style={{ padding: '1rem' }}>Email</th>
                       <th style={{ padding: '1rem' }}>Message</th>
+                      <th style={{ padding: '1rem' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -232,6 +233,9 @@ const Admin = () => {
                         <td style={{ padding: '1rem', fontWeight: 600 }}>{msg.name}</td>
                         <td style={{ padding: '1rem' }}>{msg.email}</td>
                         <td style={{ padding: '1rem' }}>{msg.message}</td>
+                        <td style={{ padding: '1rem' }}>
+                          <a href={`mailto:${msg.email}?subject=Reply from Kamma Hostel&body=Hi ${msg.name},%0A%0A`} style={{ display: 'inline-block', background: 'var(--color-primary)', color: 'white', padding: '0.5rem 1rem', borderRadius: '4px', textDecoration: 'none', fontSize: '0.9rem' }}>Reply</a>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

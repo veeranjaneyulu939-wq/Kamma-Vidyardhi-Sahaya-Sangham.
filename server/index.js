@@ -89,6 +89,36 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend is running' });
 });
 
+// API route to submit an admission form
+app.post('/api/admissions', (req, res) => {
+    const { studentName, dob, fatherName, contactNumber, course, address } = req.body;
+    
+    if (!studentName || !dob || !fatherName || !contactNumber || !course || !address) {
+        return res.status(400).json({ error: 'All fields are required.' });
+    }
+
+    const sql = 'INSERT INTO admissions (studentName, dob, fatherName, contactNumber, course, address) VALUES (?, ?, ?, ?, ?, ?)';
+    db.run(sql, [studentName, dob, fatherName, contactNumber, course, address], function(err) {
+        if (err) {
+            console.error('Database error:', err.message);
+            return res.status(500).json({ error: 'Failed to submit admission.' });
+        }
+        res.status(201).json({ success: true, admissionId: this.lastID });
+    });
+});
+
+// API route to get all admissions (for admin - PROTECTED)
+app.get('/api/admissions', authenticateToken, (req, res) => {
+    const sql = 'SELECT * FROM admissions ORDER BY created_at DESC';
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Database error:', err.message);
+            return res.status(500).json({ error: 'Failed to retrieve admissions.' });
+        }
+        res.json(rows);
+    });
+});
+
 // API route to submit a contact message
 app.post('/api/contact', (req, res) => {
     const { name, email, message } = req.body;

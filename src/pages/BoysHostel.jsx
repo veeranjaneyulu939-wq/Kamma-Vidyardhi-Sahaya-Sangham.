@@ -2,6 +2,44 @@ import React, { useState } from 'react';
 
 const BoysHostel = () => {
   const [activeTab, setActiveTab] = useState('admission');
+  const [formData, setFormData] = useState({
+    studentName: '',
+    dob: '',
+    fatherName: '',
+    contactNumber: '',
+    course: '',
+    address: ''
+  });
+  const [status, setStatus] = useState({ type: '', message: '' });
+
+  const getApiUrl = () => import.meta.env.PROD ? '' : 'http://localhost:5000';
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus({ type: 'loading', message: 'Submitting application...' });
+    
+    try {
+      const res = await fetch(`${getApiUrl()}/api/admissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setStatus({ type: 'success', message: 'Application submitted successfully! We will contact you soon.' });
+        setFormData({ studentName: '', dob: '', fatherName: '', contactNumber: '', course: '', address: '' });
+      } else {
+        setStatus({ type: 'error', message: data.error || 'Failed to submit application.' });
+      }
+    } catch (err) {
+      setStatus({ type: 'error', message: 'Network error. Please try again later.' });
+    }
+  };
 
   return (
     <section className="section" style={{ minHeight: '80vh', background: 'var(--color-bg)' }}>
@@ -40,41 +78,47 @@ const BoysHostel = () => {
               Hostel Admission Application Form
             </h3>
             
-            <form style={{ display: 'grid', gap: '1.5rem' }}>
+            {status.message && (
+              <div style={{ padding: '1rem', marginBottom: '1.5rem', borderRadius: '4px', background: status.type === 'success' ? '#d1fae5' : '#fee2e2', color: status.type === 'success' ? '#065f46' : '#991b1b' }}>
+                {status.message}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.5rem' }}>
               <div className="grid grid-cols-2">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <label style={{ fontWeight: 600 }}>Student Full Name</label>
-                  <input type="text" placeholder="Enter full name" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
+                  <input type="text" name="studentName" value={formData.studentName} onChange={handleChange} required placeholder="Enter full name" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <label style={{ fontWeight: 600 }}>Date of Birth</label>
-                  <input type="date" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
+                  <input type="date" name="dob" value={formData.dob} onChange={handleChange} required style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <label style={{ fontWeight: 600 }}>Father's Name</label>
-                  <input type="text" placeholder="Enter father's name" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
+                  <input type="text" name="fatherName" value={formData.fatherName} onChange={handleChange} required placeholder="Enter father's name" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <label style={{ fontWeight: 600 }}>Contact Number</label>
-                  <input type="tel" placeholder="Enter mobile number" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
+                  <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} required placeholder="Enter mobile number" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontWeight: 600 }}>Course / Education Pursuing</label>
-                <input type="text" placeholder="e.g., B.Tech 1st Year, Degree 2nd Year" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
+                <input type="text" name="course" value={formData.course} onChange={handleChange} required placeholder="e.g., B.Tech 1st Year, Degree 2nd Year" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontWeight: 600 }}>Permanent Address</label>
-                <textarea rows="3" placeholder="Enter full address" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0', resize: 'vertical' }}></textarea>
+                <textarea name="address" value={formData.address} onChange={handleChange} required rows="3" placeholder="Enter full address" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0', resize: 'vertical' }}></textarea>
               </div>
 
-              <button type="button" className="btn btn-primary" style={{ marginTop: '1rem', padding: '1rem' }}>
-                Submit Application
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', padding: '1rem' }} disabled={status.type === 'loading'}>
+                {status.type === 'loading' ? 'Submitting...' : 'Submit Application'}
               </button>
             </form>
           </div>

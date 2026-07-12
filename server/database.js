@@ -22,6 +22,17 @@ const db = new sqlite3.Database(dbPath, (err) => {
   } else {
     console.log('Connected to the SQLite database.');
     
+    db.run(`CREATE TABLE IF NOT EXISTS admissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        studentName TEXT NOT NULL,
+        dob TEXT NOT NULL,
+        fatherName TEXT NOT NULL,
+        contactNumber TEXT NOT NULL,
+        course TEXT NOT NULL,
+        address TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
     db.run(`CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
