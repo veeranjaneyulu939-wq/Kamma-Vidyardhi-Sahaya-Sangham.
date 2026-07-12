@@ -29,17 +29,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
         contactNumber TEXT NOT NULL,
         academicYear TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        studentName TEXT NOT NULL,
-        dob TEXT NOT NULL,
-        fatherName TEXT NOT NULL,
-        contactNumber TEXT NOT NULL,
-        course TEXT NOT NULL,
-        address TEXT NOT NULL,
-        email TEXT NOT NULL,
-        status TEXT DEFAULT 'Pending',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS admissions (
