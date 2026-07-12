@@ -40,7 +40,6 @@ const Navbar = () => {
               <Link to="/past-presidents">Past Presidents & Secretaries</Link>
               <Link to="/founders">Founders</Link>
               <Link to="/governing-body">Governing-Body</Link>
-              <Link to="/management-committee">Management Committee</Link>
             </div>
           </div>
           <Link to="/history">HISTORY</Link>
