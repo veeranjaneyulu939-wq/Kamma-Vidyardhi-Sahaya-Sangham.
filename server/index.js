@@ -139,6 +139,14 @@ app.delete('/api/admissions/:id', authenticateToken, (req, res) => {
 });
 
 // Students Routes (Protected)
+// Public students route
+app.get('/api/public/students', (req, res) => {
+    db.all('SELECT id, name, course, academicYear FROM students ORDER BY academicYear DESC, name ASC', (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
 app.get('/api/students', authenticateToken, (req, res) => {
     db.all('SELECT * FROM students ORDER BY academicYear DESC, name ASC', (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });

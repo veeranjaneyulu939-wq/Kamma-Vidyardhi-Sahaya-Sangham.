@@ -2,6 +2,22 @@ import React, { useState } from 'react';
 
 const BoysHostel = () => {
   const [activeTab, setActiveTab] = useState('admission');
+  const [students, setStudents] = useState([]);
+  const [selectedYear, setSelectedYear] = useState('Academic Year 2024-2025');
+
+  React.useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
+        const res = await fetch(`${apiUrl}/api/public/students`);
+        if (res.ok) {
+            const data = await res.json();
+            setStudents(data);
+        }
+      } catch (err) {}
+    };
+    fetchStudents();
+  }, []);
   const [formData, setFormData] = useState({
     studentName: '',
     dob: '',
@@ -134,7 +150,7 @@ const BoysHostel = () => {
           <div className="card animate-fade-in" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h3 style={{ color: 'var(--color-primary)', margin: 0 }}>Admitted Students Directory</h3>
-              <select style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #cbd5e0', fontWeight: 600 }}>
+              <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #cbd5e0', fontWeight: 600 }}>
                 <option>Academic Year 2024-2025</option>
                 <option>Academic Year 2025-2026</option>
                 <option>Academic Year 2026-2027</option>
@@ -149,24 +165,27 @@ const BoysHostel = () => {
                     <th style={{ padding: '1rem' }}>S.No</th>
                     <th style={{ padding: '1rem' }}>Student Name</th>
                     <th style={{ padding: '1rem' }}>Course</th>
-                    <th style={{ padding: '1rem' }}>Native Place</th>
-                    <th style={{ padding: '1rem' }}>Room No</th>
+                     
                   </tr>
                 </thead>
                 <tbody>
-                  {[1, 2, 3, 4, 5].map((item) => (
-                    <tr key={item} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '1rem' }}>{item}</td>
-                      <td style={{ padding: '1rem', fontWeight: 500 }}>Example Student {item}</td>
-                      <td style={{ padding: '1rem' }}>B.Tech</td>
-                      <td style={{ padding: '1rem' }}>Guntur</td>
-                      <td style={{ padding: '1rem' }}>10{item}</td>
+                  {students.filter(s => s.academicYear === selectedYear).length > 0 ? (
+                    students.filter(s => s.academicYear === selectedYear).map((item, index) => (
+                      <tr key={item.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                        <td style={{ padding: '1rem' }}>{index + 1}</td>
+                        <td style={{ padding: '1rem', fontWeight: 500 }}>{item.name}</td>
+                        <td style={{ padding: '1rem' }}>{item.course}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>No students found for this academic year.</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
               <p style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--color-text-muted)' }}>
-                * This data is a placeholder and will be populated from the database.
+                * Showing actual enrolled student records.
               </p>
             </div>
           </div>
