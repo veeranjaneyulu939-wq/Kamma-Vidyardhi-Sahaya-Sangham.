@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import PastPresidents from './pages/PastPresidents';
 import Founders from './pages/Founders';
 import GoverningBody from './pages/GoverningBody';
+import ManagementCommittee from './pages/ManagementCommittee';
 import './index.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/past-presidents" element={<PastPresidents />} />
             <Route path="/founders" element={<Founders />} />
             <Route path="/governing-body" element={<GoverningBody />} />
+            <Route path="/management-committee" element={<ManagementCommittee />} />
             <Route path="/history" element={<History />} />
             <Route path="/boys-hostel" element={<BoysHostel />} />
             <Route path="/donate" element={<Donate />} />

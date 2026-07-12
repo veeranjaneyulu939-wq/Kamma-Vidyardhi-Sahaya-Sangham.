@@ -170,6 +170,16 @@ const db = new sqlite3.Database(dbPath, (err) => {
                             { name: 'Current President', role: 'President', bio: 'Guiding the organization towards a brighter future.', image: 'https://via.placeholder.com/150' }
                         ]
                     })
+                },
+                {
+                    name: 'management-committee',
+                    content: JSON.stringify({
+                        title: 'Management Committee',
+                        subtitle: 'The dedicated members managing our daily operations.',
+                        profiles: [
+                            { name: 'Committee Member', role: 'Member', bio: 'Ensuring smooth operations and student welfare.', image: 'https://via.placeholder.com/150' }
+                        ]
+                    })
                 }
             ];
 

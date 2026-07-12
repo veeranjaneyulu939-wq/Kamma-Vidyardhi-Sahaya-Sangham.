@@ -406,6 +406,7 @@ const Admin = () => {
                     <option value="past-presidents">Past Presidents & Secs</option>
                     <option value="founders">Founders</option>
                     <option value="governing-body">Governing Body</option>
+                    <option value="management-committee">Management Committee</option>
                     <option value="hostel">Boys Hostel Page</option>
                     <option value="donate">Donate Page</option>
                     <option value="gallery">Gallery Page</option>
