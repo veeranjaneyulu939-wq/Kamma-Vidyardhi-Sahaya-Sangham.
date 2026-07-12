@@ -42,6 +42,7 @@ const Navbar = () => {
               <Link to="/governing-body">Governing-Body</Link>
             </div>
           </div>
+          <Link to="/management-committee">MANAGEMENT COMMITTEE</Link>
           <Link to="/history">HISTORY</Link>
           <Link to="/boys-hostel">BOYS HOSTEL</Link>
           <Link to="/donate">DONATE</Link>

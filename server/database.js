@@ -177,7 +177,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
                         title: 'Management Committee',
                         subtitle: 'The dedicated members managing our daily operations.',
                         profiles: [
-                            { name: 'Committee Member', role: 'Member', bio: 'Ensuring smooth operations and student welfare.', image: 'https://via.placeholder.com/150' }
+                            
+                            { name: 'Honorary President', role: 'Honorary President', bio: 'A visionary leader with decades of experience.\n\nHe has guided the institution through many milestones.', image: '' },
+                            { name: 'President', role: 'President', bio: 'Dedicated to the ongoing success of the hostel.', image: '' },
+                            { name: 'Secretary', role: 'Secretary', bio: 'Managing daily affairs with precision and care.', image: '' }
+
                         ]
                     })
                 }
