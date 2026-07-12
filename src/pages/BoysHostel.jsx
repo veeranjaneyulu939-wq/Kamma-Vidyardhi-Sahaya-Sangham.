@@ -135,9 +135,10 @@ const BoysHostel = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h3 style={{ color: 'var(--color-primary)', margin: 0 }}>Admitted Students Directory</h3>
               <select style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #cbd5e0', fontWeight: 600 }}>
-                <option>Academic Year 2023-2024</option>
-                <option>Academic Year 2022-2023</option>
-                <option>Academic Year 2021-2022</option>
+                <option>Academic Year 2024-2025</option>
+                <option>Academic Year 2025-2026</option>
+                <option>Academic Year 2026-2027</option>
+                <option>Academic Year 2027-2028</option>
               </select>
             </div>
             
