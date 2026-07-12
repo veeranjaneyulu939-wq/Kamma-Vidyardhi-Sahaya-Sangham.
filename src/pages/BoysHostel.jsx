@@ -164,8 +164,11 @@ const BoysHostel = () => {
                 <thead>
                   <tr style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                     <th style={{ padding: '1rem' }}>S.No</th>
-                    <th style={{ padding: '1rem' }}>Student Name</th>
-                    <th style={{ padding: '1rem' }}>Course</th>
+                    <th style={{ padding: '1rem' }}>Name of the Student</th>
+                    <th style={{ padding: '1rem' }}>Branch</th>
+                    <th style={{ padding: '1rem' }}>Year of Study</th>
+                    <th style={{ padding: '1rem' }}>College</th>
+                    <th style={{ padding: '1rem' }}>Academic Year</th>
                      
                   </tr>
                 </thead>
@@ -175,12 +178,15 @@ const BoysHostel = () => {
                       <tr key={item.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '1rem' }}>{index + 1}</td>
                         <td style={{ padding: '1rem', fontWeight: 500 }}>{item.name}</td>
-                        <td style={{ padding: '1rem' }}>{item.course}</td>
+                        <td style={{ padding: '1rem' }}>{item.branch || item.course}</td>
+                        <td style={{ padding: '1rem' }}>{item.yearOfStudy || '-'}</td>
+                        <td style={{ padding: '1rem' }}>{item.college || '-'}</td>
+                        <td style={{ padding: '1rem' }}>{item.academicYear}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="3" style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>No students found for this academic year.</td>
+                      <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>No students found for this academic year.</td>
                     </tr>
                   )}
                 </tbody>

@@ -141,7 +141,7 @@ app.delete('/api/admissions/:id', authenticateToken, (req, res) => {
 // Students Routes (Protected)
 // Public students route
 app.get('/api/public/students', (req, res) => {
-    db.all('SELECT id, name, course, academicYear FROM students ORDER BY academicYear DESC, name ASC', (err, rows) => {
+    db.all('SELECT id, name, course, academicYear, branch, yearOfStudy, college FROM students ORDER BY academicYear DESC, name ASC', (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
@@ -155,10 +155,10 @@ app.get('/api/students', authenticateToken, (req, res) => {
 });
 
 app.post('/api/students', authenticateToken, (req, res) => {
-    const { name, course, contactNumber, academicYear } = req.body;
+    const { name, course, contactNumber, academicYear, branch, yearOfStudy, college } = req.body;
     if (!name || !course || !academicYear) return res.status(400).json({ error: 'Missing fields' });
-    const sql = 'INSERT INTO students (name, course, contactNumber, academicYear) VALUES (?, ?, ?, ?)';
-    db.run(sql, [name, course, contactNumber || '', academicYear], function(err) {
+    const sql = 'INSERT INTO students (name, course, contactNumber, academicYear, branch, yearOfStudy, college) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    db.run(sql, [name, course, contactNumber || '', academicYear, branch || '', yearOfStudy || '', college || ''], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
     });

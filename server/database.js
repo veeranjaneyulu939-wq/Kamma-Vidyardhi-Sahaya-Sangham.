@@ -28,6 +28,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
         course TEXT NOT NULL,
         contactNumber TEXT NOT NULL,
         academicYear TEXT NOT NULL,
+        branch TEXT DEFAULT '',
+        yearOfStudy TEXT DEFAULT '',
+        college TEXT DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
@@ -45,6 +48,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
     )`);
     
     // Safely add new columns to existing table
+    db.run("ALTER TABLE students ADD COLUMN branch TEXT DEFAULT ''", (err) => {});
+    db.run("ALTER TABLE students ADD COLUMN yearOfStudy TEXT DEFAULT ''", (err) => {});
+    db.run("ALTER TABLE students ADD COLUMN college TEXT DEFAULT ''", (err) => {});
     db.run("ALTER TABLE admissions ADD COLUMN email TEXT DEFAULT ''", (err) => {});
     db.run("ALTER TABLE admissions ADD COLUMN status TEXT DEFAULT 'Pending'", (err) => {});
     

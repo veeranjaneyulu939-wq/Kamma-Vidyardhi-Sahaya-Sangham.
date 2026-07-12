@@ -8,7 +8,7 @@ const Admin = () => {
   // Students state
   const [students, setStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(true);
-  const [studentForm, setStudentForm] = useState({ name: '', course: '', contactNumber: '', academicYear: '' });
+  const [studentForm, setStudentForm] = useState({ name: '', course: '', contactNumber: '', academicYear: '', branch: '', yearOfStudy: '', college: '' });
   const [selectedYearFilter, setSelectedYearFilter] = useState('All');
 
   // Admissions state
@@ -84,7 +84,7 @@ const Admin = () => {
         body: JSON.stringify(studentForm)
       });
       if (res.ok) {
-        setStudentForm({ name: '', course: '', contactNumber: '', academicYear: '' });
+        setStudentForm({ name: '', course: '', contactNumber: '', academicYear: '', branch: '', yearOfStudy: '', college: '' });
         fetchStudents(getToken());
       } else {
         const data = await res.json();
@@ -432,7 +432,10 @@ const Admin = () => {
               <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--color-primary)' }}>Add Enrolled Student</h3>
               <form onSubmit={handleAddStudent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input type="text" placeholder="Student Name" required value={studentForm.name} onChange={e => setStudentForm({...studentForm, name: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
-                <input type="text" placeholder="Course / Education" required value={studentForm.course} onChange={e => setStudentForm({...studentForm, course: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
+                <input type="text" placeholder="Course" required value={studentForm.course} onChange={e => setStudentForm({...studentForm, course: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
+                <input type="text" placeholder="Branch" value={studentForm.branch} onChange={e => setStudentForm({...studentForm, branch: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
+                <input type="text" placeholder="Year of Study" value={studentForm.yearOfStudy} onChange={e => setStudentForm({...studentForm, yearOfStudy: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
+                <input type="text" placeholder="College" value={studentForm.college} onChange={e => setStudentForm({...studentForm, college: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
                 <input type="text" placeholder="Contact Number" value={studentForm.contactNumber} onChange={e => setStudentForm({...studentForm, contactNumber: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
                 <select required value={studentForm.academicYear} onChange={e => setStudentForm({...studentForm, academicYear: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }}>
                   <option value="" disabled>Select Academic Year</option>
