@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
 
+const generateAcademicYears = () => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let i = 2023; i <= currentYear + 5; i++) {
+    years.push(`Academic Year ${i}-${i + 1}`);
+  }
+  return years;
+};
+
 const BoysHostel = () => {
   const [activeTab, setActiveTab] = useState('admission');
   const [students, setStudents] = useState([]);
-  const [selectedYear, setSelectedYear] = useState('Academic Year 2024-2025');
+  const [selectedYear, setSelectedYear] = useState(() => {
+    const cy = new Date().getFullYear();
+    const cm = new Date().getMonth();
+    const startYear = cm >= 5 ? cy : cy - 1; // Academic year usually starts in June
+    return `Academic Year ${startYear}-${startYear + 1}`;
+  });
 
   React.useEffect(() => {
     const fetchStudents = async () => {
@@ -151,11 +165,9 @@ const BoysHostel = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h3 style={{ color: 'var(--color-primary)', margin: 0 }}>Admitted Students Directory</h3>
               <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #cbd5e0', fontWeight: 600 }}>
-                <option>Academic Year 2024-2025</option>
-                <option>Academic Year 2023-2024</option>
-                <option>Academic Year 2025-2026</option>
-                <option>Academic Year 2026-2027</option>
-                <option>Academic Year 2027-2028</option>
+                {generateAcademicYears().reverse().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
               </select>
             </div>
             

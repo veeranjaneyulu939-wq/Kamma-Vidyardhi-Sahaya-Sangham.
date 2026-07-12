@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrashAlt } from 'react-icons/fa';
 
+const generateAcademicYears = () => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let i = 2023; i <= currentYear + 5; i++) {
+    years.push(`Academic Year ${i}-${i + 1}`);
+  }
+  return years;
+};
+
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('messages');
   
@@ -439,10 +448,9 @@ const Admin = () => {
                 <input type="text" placeholder="Contact Number" value={studentForm.contactNumber} onChange={e => setStudentForm({...studentForm, contactNumber: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
                 <select required value={studentForm.academicYear} onChange={e => setStudentForm({...studentForm, academicYear: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }}>
                   <option value="" disabled>Select Academic Year</option>
-                  <option value="Academic Year 2024-2025">Academic Year 2024-2025</option>
-                  <option value="Academic Year 2025-2026">Academic Year 2025-2026</option>
-                  <option value="Academic Year 2026-2027">Academic Year 2026-2027</option>
-                  <option value="Academic Year 2027-2028">Academic Year 2027-2028</option>
+                  {generateAcademicYears().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
                 </select>
                 <button type="submit" className="btn btn-primary">Add Student</button>
               </form>
@@ -453,10 +461,9 @@ const Admin = () => {
                 <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--color-primary)' }}>Student Records</h3>
                 <select value={selectedYearFilter} onChange={e => setSelectedYearFilter(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}>
                   <option value="All">All Years</option>
-                  <option value="Academic Year 2024-2025">Academic Year 2024-2025</option>
-                  <option value="Academic Year 2025-2026">Academic Year 2025-2026</option>
-                  <option value="Academic Year 2026-2027">Academic Year 2026-2027</option>
-                  <option value="Academic Year 2027-2028">Academic Year 2027-2028</option>
+                  {generateAcademicYears().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
                 </select>
               </div>
               
