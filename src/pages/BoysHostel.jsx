@@ -152,6 +152,7 @@ const BoysHostel = () => {
               <h3 style={{ color: 'var(--color-primary)', margin: 0 }}>Admitted Students Directory</h3>
               <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #cbd5e0', fontWeight: 600 }}>
                 <option>Academic Year 2024-2025</option>
+                <option>Academic Year 2023-2024</option>
                 <option>Academic Year 2025-2026</option>
                 <option>Academic Year 2026-2027</option>
                 <option>Academic Year 2027-2028</option>
@@ -169,8 +170,8 @@ const BoysHostel = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.filter(s => s.academicYear === selectedYear).length > 0 ? (
-                    students.filter(s => s.academicYear === selectedYear).map((item, index) => (
+                  {students.filter(s => s.academicYear === selectedYear || s.academicYear === selectedYear.replace('Academic Year ', '')).length > 0 ? (
+                    students.filter(s => s.academicYear === selectedYear || s.academicYear === selectedYear.replace('Academic Year ', '')).map((item, index) => (
                       <tr key={item.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '1rem' }}>{index + 1}</td>
                         <td style={{ padding: '1rem', fontWeight: 500 }}>{item.name}</td>

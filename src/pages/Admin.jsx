@@ -459,7 +459,7 @@ const Admin = () => {
               
               {studentsLoading ? <p>Loading...</p> : students.length === 0 ? <p>No students found.</p> : (
                 <div style={{ overflowY: 'auto', maxHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {students.filter(s => selectedYearFilter === 'All' || s.academicYear === selectedYearFilter).map(st => (
+                  {students.filter(s => selectedYearFilter === 'All' || s.academicYear === selectedYearFilter || s.academicYear === selectedYearFilter.replace('Academic Year ', '')).map(st => (
                     <div key={st.id} style={{ border: '1px solid #eee', padding: '1rem', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <h4 style={{ margin: '0 0 0.2rem 0' }}>{st.name}</h4>
