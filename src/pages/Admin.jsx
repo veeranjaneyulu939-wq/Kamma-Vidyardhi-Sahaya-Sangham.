@@ -31,7 +31,7 @@ const Admin = () => {
     fetchEvents(token);
   }, [navigate]);
 
-  const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const getApiUrl = () => import.meta.env.PROD ? '' : 'http://localhost:5000';
   const getToken = () => localStorage.getItem('adminToken');
 
   const fetchMessages = async (token) => {

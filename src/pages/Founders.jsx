@@ -10,7 +10,7 @@ const Founders = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
         const res = await fetch(`${apiUrl}/api/pages/founders`);
         if (res.ok) setContent(await res.json());
       } catch (err) {}
