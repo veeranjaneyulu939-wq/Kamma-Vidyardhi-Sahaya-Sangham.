@@ -35,26 +35,19 @@ const History = () => {
           <p style={{ color: 'var(--color-text-muted)', fontSize: '1.2rem' }}>{content.subtitle}</p>
         </div>
         
-        <div style={{ width: '100%', margin: '0 auto', position: 'relative' }}>
-          {/* Vertical Line */}
-          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', width: '4px', height: '100%', background: 'var(--color-accent)', borderRadius: '2px' }}></div>
-          
+        <div style={{ width: '100%', margin: '0 auto', maxWidth: '900px' }}>
           {content.timeline && content.timeline.map((item, index) => (
-            <div key={index} style={{ 
-              display: 'flex', 
-              justifyContent: index % 2 === 0 ? 'flex-start' : 'flex-end',
-              marginBottom: '3rem',
-              position: 'relative',
-              width: '100%'
-            }}>
-              <div style={{ width: '45%' }}>
-                <div className="card" style={{ padding: '2rem', position: 'relative', transition: 'var(--transition)' }} 
-                     onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                     onMouseOut={(e) => e.currentTarget.style.transform = 'none'}>
-                  <h3 style={{ fontSize: '2rem', color: 'var(--color-primary)', marginBottom: '0.5rem', fontFamily: 'serif' }}>{item.year}</h3>
-                  <p style={{ color: 'var(--color-text)', lineHeight: 1.6 }}>{item.event}</p>
-                </div>
-              </div>
+            <div key={index} className="card" style={{ padding: '2.5rem', marginBottom: '2.5rem', transition: 'var(--transition)' }} 
+                 onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+                 onMouseOut={(e) => e.currentTarget.style.transform = 'none'}>
+              {item.year && (
+                <h3 style={{ fontSize: '1.8rem', color: 'var(--color-primary)', marginBottom: '1rem', fontFamily: 'serif', borderBottom: '2px solid var(--color-surface)', paddingBottom: '0.5rem', display: 'inline-block' }}>
+                  {item.year}
+                </h3>
+              )}
+              <p style={{ color: 'var(--color-text)', lineHeight: 1.8, fontSize: '1.1rem', whiteSpace: 'pre-wrap' }}>
+                {item.event}
+              </p>
             </div>
           ))}
         </div>
