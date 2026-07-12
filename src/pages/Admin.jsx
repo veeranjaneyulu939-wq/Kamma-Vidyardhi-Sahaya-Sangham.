@@ -5,6 +5,10 @@ import { FaTrashAlt } from 'react-icons/fa';
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('messages');
   
+  // Admissions state
+  const [admissions, setAdmissions] = useState([]);
+  const [admissionsLoading, setAdmissionsLoading] = useState(true);
+  
   // Messages state
   const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
@@ -28,11 +32,27 @@ const Admin = () => {
       return;
     }
     fetchMessages(token);
+    fetchAdmissions(token);
     fetchEvents(token);
   }, [navigate]);
 
   const getApiUrl = () => import.meta.env.PROD ? '' : 'http://localhost:5000';
   const getToken = () => localStorage.getItem('adminToken');
+
+  const fetchAdmissions = async (token) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/api/admissions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) setAdmissions(data);
+      else handleError(res.status, data.error);
+    } catch (err) {
+      setError('Failed to load admissions.');
+    } finally {
+      setAdmissionsLoading(false);
+    }
+  };
 
   const fetchMessages = async (token) => {
     try {
@@ -190,6 +210,13 @@ const Admin = () => {
             style={{ background: activeTab === 'messages' ? 'var(--color-primary)' : '#cbd5e0', color: activeTab === 'messages' ? 'white' : '#4a5568' }}
           >
             Contact Messages
+          </button>
+          <button 
+            onClick={() => setActiveTab('admissions')}
+            className="btn" 
+            style={{ background: activeTab === 'admissions' ? 'var(--color-primary)' : '#cbd5e0', color: activeTab === 'admissions' ? 'white' : '#4a5568' }}
+          >
+            Admissions
           </button>
           <button 
             onClick={() => setActiveTab('events')}
