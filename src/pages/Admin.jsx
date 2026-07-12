@@ -238,6 +238,42 @@ const Admin = () => {
             <div style={{ color: 'red', padding: '1rem', background: '#fee2e2', borderRadius: '4px', marginBottom: '1rem' }}>{error}</div>
         )}
         
+        {activeTab === 'admissions' && (
+            <div className="card" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--color-primary)' }}>Hostel Admissions</h3>
+            {admissionsLoading ? <p>Loading...</p> : admissions.length === 0 ? <p>No admission forms submitted yet.</p> : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--color-surface)' }}>
+                      <th style={{ padding: '1rem' }}>Date</th>
+                      <th style={{ padding: '1rem' }}>Student Name</th>
+                      <th style={{ padding: '1rem' }}>DOB</th>
+                      <th style={{ padding: '1rem' }}>Father's Name</th>
+                      <th style={{ padding: '1rem' }}>Contact</th>
+                      <th style={{ padding: '1rem' }}>Course</th>
+                      <th style={{ padding: '1rem' }}>Address</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {admissions.map((adm) => (
+                      <tr key={adm.id} style={{ borderBottom: '1px solid #eee' }}>
+                        <td style={{ padding: '1rem' }}>{new Date(adm.created_at).toLocaleDateString()}</td>
+                        <td style={{ padding: '1rem', fontWeight: 600 }}>{adm.studentName}</td>
+                        <td style={{ padding: '1rem' }}>{adm.dob}</td>
+                        <td style={{ padding: '1rem' }}>{adm.fatherName}</td>
+                        <td style={{ padding: '1rem' }}>{adm.contactNumber}</td>
+                        <td style={{ padding: '1rem' }}>{adm.course}</td>
+                        <td style={{ padding: '1rem' }}>{adm.address}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'messages' && (
             <div className="card" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--color-primary)' }}>Contact Us Messages</h3>
