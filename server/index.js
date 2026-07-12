@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('./database');
+const { AdminUser, Student, Admission, Message, Event, Page } = require('./database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -61,27 +61,29 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Admin Login Route
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password required.' });
     }
     
-    db.get("SELECT * FROM admin_users WHERE username = ?", [username], (err, user) => {
-        if (err || !user) {
+    try {
+        const user = await AdminUser.findOne({ username });
+        if (!user) {
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
         
-        bcrypt.compare(password, user.password, (err, match) => {
-            if (err || !match) {
-                return res.status(401).json({ error: 'Invalid credentials.' });
-            }
-            
-            const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
-            res.json({ success: true, token });
-        });
-    });
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            return res.status(401).json({ error: 'Invalid credentials.' });
+        }
+        
+        const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ success: true, token });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // Basic test route
@@ -90,187 +92,200 @@ app.get('/api/health', (req, res) => {
 });
 
 // API route to submit an admission form
-app.post('/api/admissions', (req, res) => {
+app.post('/api/admissions', async (req, res) => {
     const { studentName, dob, fatherName, contactNumber, course, address, email } = req.body;
     
     if (!studentName || !dob || !fatherName || !contactNumber || !course || !address || !email) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    const sql = 'INSERT INTO admissions (studentName, dob, fatherName, contactNumber, course, address, email, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    const status = 'Pending';
-    db.run(sql, [studentName, dob, fatherName, contactNumber, course, address, email, status], function(err) {
-        if (err) {
-            console.error('Database error:', err.message);
-            return res.status(500).json({ error: 'Failed to submit admission.' });
-        }
-        res.status(201).json({ success: true, admissionId: this.lastID });
-    });
+    try {
+        const admission = new Admission({
+            studentName, dob, fatherName, contactNumber, course, address, email, status: 'Pending'
+        });
+        await admission.save();
+        res.status(201).json({ success: true, admissionId: admission._id });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to submit admission.' });
+    }
 });
 
 // API route to get all admissions (for admin - PROTECTED)
-app.get('/api/admissions', authenticateToken, (req, res) => {
-    const sql = 'SELECT * FROM admissions ORDER BY created_at DESC';
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error('Database error:', err.message);
-            return res.status(500).json({ error: 'Failed to retrieve admissions.' });
-        }
-        res.json(rows);
-    });
+app.get('/api/admissions', authenticateToken, async (req, res) => {
+    try {
+        const admissions = await Admission.find().sort({ created_at: -1 });
+        res.json(admissions);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to retrieve admissions.' });
+    }
 });
 
 // Update admission status (Protected)
-app.put('/api/admissions/:id/status', authenticateToken, (req, res) => {
-    const { status } = req.body;
-    const sql = 'UPDATE admissions SET status = ? WHERE id = ?';
-    db.run(sql, [status, req.params.id], function(err) {
-        if (err) return res.status(500).json({ error: 'Failed to update status.' });
+app.put('/api/admissions/:id/status', authenticateToken, async (req, res) => {
+    try {
+        await Admission.findByIdAndUpdate(req.params.id, { status: req.body.status });
         res.json({ success: true });
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update status.' });
+    }
 });
 
 // Delete admission (Protected)
-app.delete('/api/admissions/:id', authenticateToken, (req, res) => {
-    db.run('DELETE FROM admissions WHERE id = ?', [req.params.id], function(err) {
-        if (err) return res.status(500).json({ error: 'Failed to delete admission.' });
+app.delete('/api/admissions/:id', authenticateToken, async (req, res) => {
+    try {
+        await Admission.findByIdAndDelete(req.params.id);
         res.json({ success: true });
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete admission.' });
+    }
 });
 
 // Students Routes (Protected)
 // Public students route
-app.get('/api/public/students', (req, res) => {
-    db.all('SELECT id, name, course, academicYear, branch, yearOfStudy, college FROM students ORDER BY academicYear DESC, name ASC', (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+app.get('/api/public/students', async (req, res) => {
+    try {
+        const students = await Student.find({}, 'name course academicYear branch yearOfStudy college').sort({ academicYear: -1, name: 1 });
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
-app.get('/api/students', authenticateToken, (req, res) => {
-    db.all('SELECT * FROM students ORDER BY academicYear DESC, name ASC', (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+app.get('/api/students', authenticateToken, async (req, res) => {
+    try {
+        const students = await Student.find().sort({ academicYear: -1, name: 1 });
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
-app.post('/api/students', authenticateToken, (req, res) => {
+app.post('/api/students', authenticateToken, async (req, res) => {
     const { name, course, contactNumber, academicYear, branch, yearOfStudy, college } = req.body;
     if (!name || !course || !academicYear) return res.status(400).json({ error: 'Missing fields' });
-    const sql = 'INSERT INTO students (name, course, contactNumber, academicYear, branch, yearOfStudy, college) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    db.run(sql, [name, course, contactNumber || '', academicYear, branch || '', yearOfStudy || '', college || ''], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ id: this.lastID });
-    });
+    
+    try {
+        const student = new Student({
+            name, course, contactNumber: contactNumber || '', academicYear, branch: branch || '', yearOfStudy: yearOfStudy || '', college: college || ''
+        });
+        await student.save();
+        res.json({ id: student._id });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save student.' });
+    }
 });
 
-app.delete('/api/students/:id', authenticateToken, (req, res) => {
-    db.run('DELETE FROM students WHERE id = ?', [req.params.id], function(err) {
-        if (err) return res.status(500).json({ error: 'Failed to delete student.' });
+app.delete('/api/students/:id', authenticateToken, async (req, res) => {
+    try {
+        await Student.findByIdAndDelete(req.params.id);
         res.json({ success: true });
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete student.' });
+    }
 });
 
 // API route to submit a contact message
-app.post('/api/contact', (req, res) => {
+app.post('/api/contact', async (req, res) => {
     const { name, email, message } = req.body;
     
     if (!name || !email || !message) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    const sql = 'INSERT INTO messages (name, email, message) VALUES (?, ?, ?)';
-    db.run(sql, [name, email, message], function(err) {
-        if (err) {
-            console.error('Database error:', err.message);
-            return res.status(500).json({ error: 'Failed to save message.' });
-        }
-        res.status(201).json({ success: true, messageId: this.lastID });
-    });
+    try {
+        const msg = new Message({ name, email, message });
+        await msg.save();
+        res.status(201).json({ success: true, messageId: msg._id });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save message.' });
+    }
 });
 
 // API route to get all messages (for admin - PROTECTED)
-app.get('/api/messages', authenticateToken, (req, res) => {
-    const sql = 'SELECT * FROM messages ORDER BY created_at DESC';
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error('Database error:', err.message);
-            return res.status(500).json({ error: 'Failed to retrieve messages.' });
-        }
-        res.json(rows);
-    });
+app.get('/api/messages', authenticateToken, async (req, res) => {
+    try {
+        const messages = await Message.find().sort({ created_at: -1 });
+        res.json(messages);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to retrieve messages.' });
+    }
 });
 
 // --- EVENTS API ---
 
 // Get all events (Public)
-app.get('/api/events', (req, res) => {
-    const sql = 'SELECT * FROM events ORDER BY id DESC';
-    db.all(sql, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Failed to retrieve events.' });
-        res.json(rows);
-    });
+app.get('/api/events', async (req, res) => {
+    try {
+        const events = await Event.find().sort({ _id: -1 });
+        res.json(events);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to retrieve events.' });
+    }
 });
 
 // Add a new event (Protected)
-app.post('/api/events', authenticateToken, (req, res) => {
+app.post('/api/events', authenticateToken, async (req, res) => {
     const { title, date, location, description, image } = req.body;
     if (!title || !date || !location || !description) {
         return res.status(400).json({ error: 'All fields except image are required.' });
     }
-    const sql = 'INSERT INTO events (title, date, location, description, image) VALUES (?, ?, ?, ?, ?)';
-    db.run(sql, [title, date, location, description, image || null], function(err) {
-        if (err) return res.status(500).json({ error: 'Failed to save event.' });
-        res.status(201).json({ success: true, eventId: this.lastID });
-    });
+    
+    try {
+        const event = new Event({ title, date, location, description, image: image || null });
+        await event.save();
+        res.status(201).json({ success: true, eventId: event._id });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save event.' });
+    }
 });
 
 // Update an event (Protected)
-app.put('/api/events/:id', authenticateToken, (req, res) => {
+app.put('/api/events/:id', authenticateToken, async (req, res) => {
     const { title, date, location, description, image } = req.body;
-    const sql = 'UPDATE events SET title = ?, date = ?, location = ?, description = ?, image = ? WHERE id = ?';
-    db.run(sql, [title, date, location, description, image || null, req.params.id], function(err) {
-        if (err) return res.status(500).json({ error: 'Failed to update event.' });
+    try {
+        await Event.findByIdAndUpdate(req.params.id, { title, date, location, description, image: image || null });
         res.json({ success: true });
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update event.' });
+    }
 });
 
 // Delete an event (Protected)
-app.delete('/api/events/:id', authenticateToken, (req, res) => {
-    const sql = 'DELETE FROM events WHERE id = ?';
-    db.run(sql, [req.params.id], function(err) {
-        if (err) return res.status(500).json({ error: 'Failed to delete event.' });
+app.delete('/api/events/:id', authenticateToken, async (req, res) => {
+    try {
+        await Event.findByIdAndDelete(req.params.id);
         res.json({ success: true });
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete event.' });
+    }
 });
 
 // --- PAGES CMS API ---
 
 // Get content for a specific page (Public)
-app.get('/api/pages/:page_name', (req, res) => {
-    const sql = 'SELECT content FROM pages WHERE page_name = ?';
-    db.get(sql, [req.params.page_name], (err, row) => {
-        if (err) return res.status(500).json({ error: 'Failed to retrieve page content.' });
-        if (!row) return res.status(404).json({ error: 'Page not found.' });
-        res.json(JSON.parse(row.content));
-    });
+app.get('/api/pages/:page_name', async (req, res) => {
+    try {
+        const page = await Page.findOne({ page_name: req.params.page_name });
+        if (!page) return res.status(404).json({ error: 'Page not found.' });
+        res.json(JSON.parse(page.content));
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to retrieve page content.' });
+    }
 });
 
 // Update content for a specific page (Protected)
-app.put('/api/pages/:page_name', authenticateToken, (req, res) => {
+app.put('/api/pages/:page_name', authenticateToken, async (req, res) => {
     const content = JSON.stringify(req.body);
-    const sql = 'UPDATE pages SET content = ? WHERE page_name = ?';
-    db.run(sql, [content, req.params.page_name], function(err) {
-        if (err) return res.status(500).json({ error: 'Failed to update page content.' });
-        if (this.changes === 0) {
-            db.run('INSERT INTO pages (page_name, content) VALUES (?, ?)', [req.params.page_name, content], (err) => {
-                if (err) return res.status(500).json({ error: 'Failed to create page content.' });
-                return res.json({ success: true });
-            });
-        } else {
-            res.json({ success: true });
-        }
-    });
+    try {
+        await Page.findOneAndUpdate(
+            { page_name: req.params.page_name },
+            { content },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update page content.' });
+    }
 });
 
 // Image Upload Endpoint (Protected)
