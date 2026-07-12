@@ -2,7 +2,19 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcrypt');
 
-const dataDir = process.env.DATA_DIR || __dirname;
+const fs = require('fs');
+
+let dataDir = process.env.DATA_DIR || __dirname;
+try {
+    // Check if we have write access, if it exists, or just fallback if it throws
+    if (process.env.DATA_DIR && !fs.existsSync(process.env.DATA_DIR)) {
+        fs.mkdirSync(process.env.DATA_DIR, { recursive: true });
+    }
+} catch (e) {
+    console.error("Could not write to DATA_DIR for database, falling back to local directory.");
+    dataDir = __dirname;
+}
+
 const dbPath = path.resolve(dataDir, 'database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {

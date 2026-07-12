@@ -14,10 +14,19 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-kamma-hostel-key';
 app.use(cors());
 app.use(express.json());
 
-const dataDir = process.env.DATA_DIR || __dirname;
-const uploadsDir = path.join(dataDir, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+let dataDir = process.env.DATA_DIR || __dirname;
+let uploadsDir = path.join(dataDir, 'uploads');
+try {
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+} catch (error) {
+    console.error("Could not write to DATA_DIR, falling back to local directory.");
+    dataDir = __dirname;
+    uploadsDir = path.join(dataDir, 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
 }
 
 app.use('/uploads', express.static(uploadsDir));
