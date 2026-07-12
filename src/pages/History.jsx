@@ -35,7 +35,7 @@ const History = () => {
           <p style={{ color: 'var(--color-text-muted)', fontSize: '1.2rem' }}>{content.subtitle}</p>
         </div>
         
-        <div style={{ width: '100%', margin: '0 auto', maxWidth: '900px' }}>
+        <div style={{ width: '100%', margin: '0 auto' }}>
           {content.timeline && content.timeline.map((item, index) => (
             <div key={index} className="card" style={{ padding: '2.5rem', marginBottom: '2.5rem', transition: 'var(--transition)' }} 
                  onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
