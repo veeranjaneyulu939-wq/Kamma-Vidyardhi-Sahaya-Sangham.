@@ -30,9 +30,15 @@ const db = new sqlite3.Database(dbPath, (err) => {
         contactNumber TEXT NOT NULL,
         course TEXT NOT NULL,
         address TEXT NOT NULL,
+        email TEXT NOT NULL,
+        status TEXT DEFAULT 'Pending',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    // Safely add new columns to existing table
+    db.run("ALTER TABLE admissions ADD COLUMN email TEXT DEFAULT ''", (err) => {});
+    db.run("ALTER TABLE admissions ADD COLUMN status TEXT DEFAULT 'Pending'", (err) => {});
+    
     db.run(`CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,

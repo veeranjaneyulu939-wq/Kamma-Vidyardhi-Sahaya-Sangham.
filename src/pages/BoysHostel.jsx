@@ -8,7 +8,8 @@ const BoysHostel = () => {
     fatherName: '',
     contactNumber: '',
     course: '',
-    address: ''
+    address: '',
+    email: ''
   });
   const [status, setStatus] = useState({ type: '', message: '' });
 
@@ -32,7 +33,7 @@ const BoysHostel = () => {
       
       if (res.ok) {
         setStatus({ type: 'success', message: 'Application submitted successfully! We will contact you soon.' });
-        setFormData({ studentName: '', dob: '', fatherName: '', contactNumber: '', course: '', address: '' });
+        setFormData({ studentName: '', dob: '', fatherName: '', contactNumber: '', course: '', address: '', email: '' });
       } else {
         setStatus({ type: 'error', message: data.error || 'Failed to submit application.' });
       }
@@ -105,6 +106,11 @@ const BoysHostel = () => {
                   <label style={{ fontWeight: 600 }}>Contact Number</label>
                   <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} required placeholder="Enter mobile number" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
                 </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontWeight: 600 }}>Email Address</label>
+                <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Enter email address" style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e0' }} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

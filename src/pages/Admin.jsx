@@ -39,6 +39,19 @@ const Admin = () => {
   const getApiUrl = () => import.meta.env.PROD ? '' : 'http://localhost:5000';
   const getToken = () => localStorage.getItem('adminToken');
 
+  const handleUpdateAdmissionStatus = async (id, status) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/api/admissions/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) fetchAdmissions(getToken());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchAdmissions = async (token) => {
     try {
       const res = await fetch(`${getApiUrl()}/api/admissions`, {
@@ -253,6 +266,8 @@ const Admin = () => {
                       <th style={{ padding: '1rem' }}>Contact</th>
                       <th style={{ padding: '1rem' }}>Course</th>
                       <th style={{ padding: '1rem' }}>Address</th>
+                      <th style={{ padding: '1rem' }}>Status</th>
+                      <th style={{ padding: '1rem' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -265,6 +280,27 @@ const Admin = () => {
                         <td style={{ padding: '1rem' }}>{adm.contactNumber}</td>
                         <td style={{ padding: '1rem' }}>{adm.course}</td>
                         <td style={{ padding: '1rem' }}>{adm.address}</td>
+                        <td style={{ padding: '1rem', fontWeight: 600, color: adm.status === 'Accepted' ? '#10b981' : adm.status === 'Rejected' ? '#ef4444' : '#f59e0b' }}>{adm.status}</td>
+                        <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            onClick={() => {
+                              handleUpdateAdmissionStatus(adm.id, 'Accepted');
+                              window.location.href = `mailto:${adm.email}?subject=Hostel Admission Accepted&body=Hi ${adm.studentName},%0A%0AWe are pleased to inform you that your application for Kamma Vidyarthi Sahaya Sangam Boys Hostel has been accepted!%0A%0APlease contact us for further joining details.%0A%0ABest regards,%0AAdmin`;
+                            }}
+                            className="btn" 
+                            style={{ background: '#10b981', color: 'white', padding: '0.5rem', fontSize: '0.8rem' }}>
+                            Accept
+                          </button>
+                          <button 
+                            onClick={() => {
+                              handleUpdateAdmissionStatus(adm.id, 'Rejected');
+                              window.location.href = `mailto:${adm.email}?subject=Hostel Admission Update&body=Hi ${adm.studentName},%0A%0AWe regret to inform you that we are unable to accept your application for the hostel at this time due to limited availability.%0A%0AWe wish you the best.%0A%0ABest regards,%0AAdmin`;
+                            }}
+                            className="btn" 
+                            style={{ background: '#ef4444', color: 'white', padding: '0.5rem', fontSize: '0.8rem' }}>
+                            Reject
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

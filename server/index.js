@@ -91,14 +91,15 @@ app.get('/api/health', (req, res) => {
 
 // API route to submit an admission form
 app.post('/api/admissions', (req, res) => {
-    const { studentName, dob, fatherName, contactNumber, course, address } = req.body;
+    const { studentName, dob, fatherName, contactNumber, course, address, email } = req.body;
     
-    if (!studentName || !dob || !fatherName || !contactNumber || !course || !address) {
+    if (!studentName || !dob || !fatherName || !contactNumber || !course || !address || !email) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    const sql = 'INSERT INTO admissions (studentName, dob, fatherName, contactNumber, course, address) VALUES (?, ?, ?, ?, ?, ?)';
-    db.run(sql, [studentName, dob, fatherName, contactNumber, course, address], function(err) {
+    const sql = 'INSERT INTO admissions (studentName, dob, fatherName, contactNumber, course, address, email, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    const status = 'Pending';
+    db.run(sql, [studentName, dob, fatherName, contactNumber, course, address, email, status], function(err) {
         if (err) {
             console.error('Database error:', err.message);
             return res.status(500).json({ error: 'Failed to submit admission.' });
@@ -116,6 +117,16 @@ app.get('/api/admissions', authenticateToken, (req, res) => {
             return res.status(500).json({ error: 'Failed to retrieve admissions.' });
         }
         res.json(rows);
+    });
+});
+
+// Update admission status (Protected)
+app.put('/api/admissions/:id/status', authenticateToken, (req, res) => {
+    const { status } = req.body;
+    const sql = 'UPDATE admissions SET status = ? WHERE id = ?';
+    db.run(sql, [status, req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to update status.' });
+        res.json({ success: true });
     });
 });
 
