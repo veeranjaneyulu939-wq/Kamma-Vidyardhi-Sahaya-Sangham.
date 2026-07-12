@@ -5,6 +5,12 @@ import { FaTrashAlt } from 'react-icons/fa';
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('messages');
   
+  // Students state
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [studentForm, setStudentForm] = useState({ name: '', course: '', contactNumber: '', academicYear: '' });
+  const [selectedYearFilter, setSelectedYearFilter] = useState('All');
+
   // Admissions state
   const [admissions, setAdmissions] = useState([]);
   const [admissionsLoading, setAdmissionsLoading] = useState(true);
@@ -33,6 +39,7 @@ const Admin = () => {
     }
     fetchMessages(token);
     fetchAdmissions(token);
+    fetchStudents(token);
     fetchEvents(token);
   }, [navigate]);
 
@@ -49,6 +56,68 @@ const Admin = () => {
       if (res.ok) fetchAdmissions(getToken());
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchStudents = async (token) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/api/students`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) setStudents(data);
+      else handleError(res.status, data.error);
+    } catch (err) {
+      setError('Failed to load students.');
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  const handleAddStudent = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const res = await fetch(`${getApiUrl()}/api/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+        body: JSON.stringify(studentForm)
+      });
+      if (res.ok) {
+        setStudentForm({ name: '', course: '', contactNumber: '', academicYear: '' });
+        fetchStudents(getToken());
+      } else {
+        const data = await res.json();
+        handleError(res.status, data.error);
+      }
+    } catch (err) {
+      setError('Failed to add student.');
+    }
+  };
+
+  const handleDeleteStudent = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this student?")) return;
+    try {
+      const res = await fetch(`${getApiUrl()}/api/students/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+      });
+      if (res.ok) fetchStudents(getToken());
+    } catch (err) {
+      setError('Failed to delete student.');
+    }
+  };
+
+  const handleDeleteAdmission = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this admission record permanently?")) return;
+    try {
+      const res = await fetch(`${getApiUrl()}/api/admissions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+      });
+      if (res.ok) fetchAdmissions(getToken());
+    } catch (err) {
+      setError('Failed to delete admission.');
     }
   };
 
@@ -232,6 +301,13 @@ const Admin = () => {
             Admissions
           </button>
           <button 
+            onClick={() => setActiveTab('students')}
+            className="btn" 
+            style={{ background: activeTab === 'students' ? 'var(--color-primary)' : '#cbd5e0', color: activeTab === 'students' ? 'white' : '#4a5568' }}
+          >
+            Students (Yearly)
+          </button>
+          <button 
             onClick={() => setActiveTab('events')}
             className="btn" 
             style={{ background: activeTab === 'events' ? 'var(--color-primary)' : '#cbd5e0', color: activeTab === 'events' ? 'white' : '#4a5568' }}
@@ -292,6 +368,12 @@ const Admin = () => {
                             Accept
                           </button>
                           <button 
+                            onClick={() => handleDeleteAdmission(adm.id)}
+                            className="btn" 
+                            style={{ background: '#64748b', color: 'white', padding: '0.5rem', fontSize: '0.8rem' }}>
+                            Delete
+                          </button>
+                          <button 
                             onClick={() => {
                               handleUpdateAdmissionStatus(adm.id, 'Rejected');
                               window.location.href = `mailto:${adm.email}?subject=Hostel Admission Update&body=Hi ${adm.studentName},%0A%0AWe regret to inform you that we are unable to accept your application for the hostel at this time due to limited availability.%0A%0AWe wish you the best.%0A%0ABest regards,%0AAdmin`;
@@ -341,6 +423,54 @@ const Admin = () => {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'students' && (
+            <div className="grid grid-cols-2" style={{ gap: '2rem' }}>
+            <div className="card" style={{ padding: '2rem' }}>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--color-primary)' }}>Add Enrolled Student</h3>
+              <form onSubmit={handleAddStudent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <input type="text" placeholder="Student Name" required value={studentForm.name} onChange={e => setStudentForm({...studentForm, name: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
+                <input type="text" placeholder="Course / Education" required value={studentForm.course} onChange={e => setStudentForm({...studentForm, course: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
+                <input type="text" placeholder="Contact Number" value={studentForm.contactNumber} onChange={e => setStudentForm({...studentForm, contactNumber: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} />
+                <select required value={studentForm.academicYear} onChange={e => setStudentForm({...studentForm, academicYear: e.target.value})} style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }}>
+                  <option value="" disabled>Select Academic Year</option>
+                  <option value="2023-2024">2023-2024</option>
+                  <option value="2024-2025">2024-2025</option>
+                  <option value="2025-2026">2025-2026</option>
+                  <option value="2026-2027">2026-2027</option>
+                </select>
+                <button type="submit" className="btn btn-primary">Add Student</button>
+              </form>
+            </div>
+
+            <div className="card" style={{ padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--color-primary)' }}>Student Records</h3>
+                <select value={selectedYearFilter} onChange={e => setSelectedYearFilter(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}>
+                  <option value="All">All Years</option>
+                  <option value="2023-2024">2023-2024</option>
+                  <option value="2024-2025">2024-2025</option>
+                  <option value="2025-2026">2025-2026</option>
+                  <option value="2026-2027">2026-2027</option>
+                </select>
+              </div>
+              
+              {studentsLoading ? <p>Loading...</p> : students.length === 0 ? <p>No students found.</p> : (
+                <div style={{ overflowY: 'auto', maxHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {students.filter(s => selectedYearFilter === 'All' || s.academicYear === selectedYearFilter).map(st => (
+                    <div key={st.id} style={{ border: '1px solid #eee', padding: '1rem', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 0.2rem 0' }}>{st.name}</h4>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'gray' }}>{st.course} | {st.academicYear} | {st.contactNumber}</p>
+                      </div>
+                      <button onClick={() => handleDeleteStudent(st.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.5rem' }}>Delete</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

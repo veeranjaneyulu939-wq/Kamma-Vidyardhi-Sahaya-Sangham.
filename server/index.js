@@ -130,6 +130,39 @@ app.put('/api/admissions/:id/status', authenticateToken, (req, res) => {
     });
 });
 
+// Delete admission (Protected)
+app.delete('/api/admissions/:id', authenticateToken, (req, res) => {
+    db.run('DELETE FROM admissions WHERE id = ?', [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to delete admission.' });
+        res.json({ success: true });
+    });
+});
+
+// Students Routes (Protected)
+app.get('/api/students', authenticateToken, (req, res) => {
+    db.all('SELECT * FROM students ORDER BY academicYear DESC, name ASC', (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/students', authenticateToken, (req, res) => {
+    const { name, course, contactNumber, academicYear } = req.body;
+    if (!name || !course || !academicYear) return res.status(400).json({ error: 'Missing fields' });
+    const sql = 'INSERT INTO students (name, course, contactNumber, academicYear) VALUES (?, ?, ?, ?)';
+    db.run(sql, [name, course, contactNumber || '', academicYear], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID });
+    });
+});
+
+app.delete('/api/students/:id', authenticateToken, (req, res) => {
+    db.run('DELETE FROM students WHERE id = ?', [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to delete student.' });
+        res.json({ success: true });
+    });
+});
+
 // API route to submit a contact message
 app.post('/api/contact', (req, res) => {
     const { name, email, message } = req.body;
