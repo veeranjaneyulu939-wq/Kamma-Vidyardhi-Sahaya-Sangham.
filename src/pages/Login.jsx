@@ -8,13 +8,17 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com'];
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      if (!ALLOWED_EMAILS.includes(cred.user.email)) {
+        throw new Error('Access Denied. You are not an Admin.');
+      }
       navigate('/admin');
     } catch (err) {
       setError(err.message || 'Login failed');
@@ -27,7 +31,10 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      await signInWithPopup(auth, provider);
+      const cred = await signInWithPopup(auth, provider);
+      if (!ALLOWED_EMAILS.includes(cred.user.email)) {
+        throw new Error('Access Denied. You are not an Admin.');
+      }
       navigate('/admin');
     } catch (err) {
       setError(err.message || 'Google Login failed');

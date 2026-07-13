@@ -45,9 +45,14 @@ const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com'];
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         navigate('/login');
+      } else if (!ALLOWED_EMAILS.includes(user.email)) {
+        firebaseSignOut(auth).then(() => {
+          navigate('/login');
+        });
       } else {
         fetchMessages();
         fetchAdmissions();
