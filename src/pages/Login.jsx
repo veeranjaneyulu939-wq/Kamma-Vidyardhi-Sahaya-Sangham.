@@ -31,12 +31,18 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      // Use redirect instead of popup to bypass strict browser popup blockers
-      await signInWithRedirect(auth, provider);
-      // The browser will redirect to Google. 
-      // When it returns, Admin.jsx's onAuthStateChanged will handle the rest!
+      const cred = await signInWithPopup(auth, provider);
+      if (!ALLOWED_EMAILS.includes(cred.user.email)) {
+        throw new Error('Access Denied. You are not an Admin.');
+      }
+      navigate('/admin');
     } catch (err) {
-      setError(err.message || 'Google Login failed');
+      if (err.code === 'auth/popup-blocked') {
+        setError('POPUP BLOCKED: Please click the small red icon in your browser address bar at the top, select "Always allow pop-ups", and try again!');
+      } else {
+        setError(err.message || 'Google Login failed');
+      }
+    } finally {
       setLoading(false);
     }
   };
