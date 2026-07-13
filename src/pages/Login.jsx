@@ -8,7 +8,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com'];
+  const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com', 'superadmin@kammahostel.com'];
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -30,7 +30,7 @@ const Login = () => {
   const handleBypassLogin = async () => {
     setError('');
     setLoading(true);
-    const bypassEmail = 'kvssgnt1930@gmail.com';
+    const bypassEmail = 'superadmin@kammahostel.com';
     const bypassPassword = 'adminpassword123';
     try {
       // Try to log in first
