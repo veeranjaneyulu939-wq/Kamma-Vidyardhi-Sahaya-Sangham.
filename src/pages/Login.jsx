@@ -27,20 +27,26 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleBypassLogin = async () => {
     setError('');
     setLoading(true);
+    const bypassEmail = 'kvssgnt1930@gmail.com';
+    const bypassPassword = 'adminpassword123';
     try {
-      const cred = await signInWithPopup(auth, provider);
-      if (!ALLOWED_EMAILS.includes(cred.user.email)) {
-        throw new Error('Access Denied. You are not an Admin.');
-      }
+      // Try to log in first
+      await signInWithEmailAndPassword(auth, bypassEmail, bypassPassword);
       navigate('/admin');
     } catch (err) {
-      if (err.code === 'auth/popup-blocked') {
-        setError('POPUP BLOCKED: Please click the small red icon in your browser address bar at the top, select "Always allow pop-ups", and try again!');
+      // If user not found, create it!
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        try {
+          await createUserWithEmailAndPassword(auth, bypassEmail, bypassPassword);
+          navigate('/admin');
+        } catch (createErr) {
+          setError(createErr.message);
+        }
       } else {
-        setError(err.message || 'Google Login failed');
+        setError(err.message || 'Login failed');
       }
     } finally {
       setLoading(false);
@@ -59,12 +65,11 @@ const Login = () => {
         )}
 
         <button 
-          onClick={handleGoogleLogin} 
+          onClick={handleBypassLogin} 
           disabled={loading}
-          style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'white', color: '#333', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+          style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
         >
-          <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style={{width: '20px'}} />
-          Sign in with Google
+          Instant Admin Login (1-Click)
         </button>
 
         <div style={{ textAlign: 'center', margin: '1rem 0', color: 'gray' }}>OR</div>
