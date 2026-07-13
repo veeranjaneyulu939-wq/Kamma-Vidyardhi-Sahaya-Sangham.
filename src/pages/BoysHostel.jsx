@@ -1,3 +1,5 @@
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import React, { useState } from 'react';
 
 const generateAcademicYears = () => {
@@ -22,13 +24,13 @@ const BoysHostel = () => {
   React.useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
-        const res = await fetch(`${apiUrl}/api/public/students`);
-        if (res.ok) {
-            const data = await res.json();
-            setStudents(data);
-        }
-      } catch (err) {}
+        const querySnapshot = await getDocs(collection(db, 'students'));
+        const studentsData = [];
+        querySnapshot.forEach((doc) => {
+          studentsData.push({ id: doc.id, ...doc.data() });
+        });
+        setStudents(studentsData);
+      } catch (err) { console.error(err); }
     };
     fetchStudents();
   }, []);
@@ -52,21 +54,14 @@ const BoysHostel = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ type: 'loading', message: 'Submitting application...' });
-    
     try {
-      const res = await fetch(`${getApiUrl()}/api/admissions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      await addDoc(collection(db, 'admissions'), {
+        ...formData,
+        status: 'Pending',
+        created_at: new Date().toISOString()
       });
-      const data = await res.json();
-      
-      if (res.ok) {
-        setStatus({ type: 'success', message: 'Application submitted successfully! We will contact you soon.' });
-        setFormData({ studentName: '', dob: '', fatherName: '', contactNumber: '', course: '', address: '', email: '' });
-      } else {
-        setStatus({ type: 'error', message: data.error || 'Failed to submit application.' });
-      }
+      setStatus({ type: 'success', message: 'Application submitted successfully! We will contact you soon.' });
+      setFormData({ studentName: '', dob: '', fatherName: '', contactNumber: '', course: '', address: '', email: '' });
     } catch (err) {
       setStatus({ type: 'error', message: 'Network error. Please try again later.' });
     }

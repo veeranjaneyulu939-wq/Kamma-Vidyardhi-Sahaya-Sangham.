@@ -1,34 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth, provider, signInWithPopup, signInWithEmailAndPassword } from '../firebase';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
     setError('');
-
+    setLoading(true);
     try {
-      const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
-      const res = await fetch(`${apiUrl}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        localStorage.setItem('adminToken', data.token);
-        navigate('/admin');
-      } else {
-        setError(data.error || 'Login failed');
-      }
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/admin');
     } catch (err) {
-      setError('Network error. Is the backend running?');
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, provider);
+      navigate('/admin');
+    } catch (err) {
+      setError(err.message || 'Google Login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,13 +47,24 @@ const Login = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+        <button 
+          onClick={handleGoogleLogin} 
+          disabled={loading}
+          style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'white', color: '#333', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+        >
+          <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style={{width: '20px'}} />
+          Sign in with Google
+        </button>
+
+        <div style={{ textAlign: 'center', margin: '1rem 0', color: 'gray' }}>OR</div>
+
+        <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Username</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Email</label>
             <input 
-              type="text" 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)} 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
               required 
               style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', background: 'var(--color-bg)', color: 'var(--color-text)' }} 
             />
@@ -64,8 +79,8 @@ const Login = () => {
               style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', background: 'var(--color-bg)', color: 'var(--color-text)' }} 
             />
           </div>
-          <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem', marginTop: '0.5rem' }}>
-            Login
+          <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '0.75rem', marginTop: '0.5rem' }}>
+            {loading ? 'Logging in...' : 'Login with Email'}
           </button>
         </form>
       </div>

@@ -1,3 +1,5 @@
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import React, { useState, useEffect } from 'react';
 
 const History = () => {
@@ -16,13 +18,13 @@ const History = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
-        const res = await fetch(`${apiUrl}/api/pages/history`);
-        if (res.ok) {
-            const data = await res.json();
-            setContent(data);
-        }
-      } catch (err) {}
+        const querySnapshot = await getDocs(collection(db, 'pages'));
+        querySnapshot.forEach((doc) => {
+          if (doc.id === 'history' || doc.data().page_name === 'history') {
+            setContent(JSON.parse(doc.data().content));
+          }
+        });
+      } catch (err) { console.error(err); }
     };
     fetchContent();
   }, []);

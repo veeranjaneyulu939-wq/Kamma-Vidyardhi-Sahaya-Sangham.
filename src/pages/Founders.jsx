@@ -1,3 +1,5 @@
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import React, { useState, useEffect } from 'react';
 
 const Founders = () => {
@@ -10,10 +12,13 @@ const Founders = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
-        const res = await fetch(`${apiUrl}/api/pages/founders`);
-        if (res.ok) setContent(await res.json());
-      } catch (err) {}
+        const querySnapshot = await getDocs(collection(db, 'pages'));
+        querySnapshot.forEach((doc) => {
+          if (doc.id === 'founders' || doc.data().page_name === 'founders') {
+            setContent(JSON.parse(doc.data().content));
+          }
+        });
+      } catch (err) { console.error(err); }
     };
     fetchContent();
   }, []);

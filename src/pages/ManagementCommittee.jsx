@@ -1,3 +1,5 @@
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import React, { useEffect, useState } from 'react';
 import { FaUserTie, FaTimes } from 'react-icons/fa';
 
@@ -8,20 +10,16 @@ const ManagementCommittee = () => {
 
     useEffect(() => {
         const fetchContent = async () => {
-            const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
-            try {
-                const res = await fetch(`${apiUrl}/api/pages/management-committee`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setPageData(data);
-                }
-            } catch (error) {
-                console.error("Failed to load content", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchContent();
+      try {
+        const querySnapshot = await getDocs(collection(db, 'pages'));
+        querySnapshot.forEach((doc) => {
+          if (doc.id === 'management-committee' || doc.data().page_name === 'management-committee') {
+            setContent(JSON.parse(doc.data().content));
+          }
+        });
+      } catch (err) { console.error(err); }
+    };
+    fetchContent();
     }, []);
 
     if (loading) return <div className="section container text-center">Loading...</div>;

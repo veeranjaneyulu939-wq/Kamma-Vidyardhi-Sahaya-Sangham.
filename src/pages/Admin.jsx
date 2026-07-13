@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { auth, db, storage, signOut as firebaseSignOut } from '../firebase';
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { FaTrashAlt } from 'react-icons/fa';
 
@@ -41,15 +45,17 @@ const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchMessages(token);
-    fetchAdmissions(token);
-    fetchStudents(token);
-    fetchEvents(token);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate('/login');
+      } else {
+        fetchMessages();
+        fetchAdmissions();
+        fetchStudents();
+        fetchEvents();
+      }
+    });
+    return () => unsubscribe();
   }, [navigate]);
 
   const getApiUrl = () => import.meta.env.PROD ? '' : 'http://localhost:5000';
@@ -57,175 +63,106 @@ const Admin = () => {
 
   const handleUpdateAdmissionStatus = async (id, status) => {
     try {
-      const res = await fetch(`${getApiUrl()}/api/admissions/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ status })
-      });
-      if (res.ok) fetchAdmissions(getToken());
-    } catch (err) {
-      console.error(err);
-    }
+      await updateDoc(doc(db, 'admissions', id), { status });
+      fetchAdmissions();
+    } catch (err) { console.error(err); }
   };
 
-  const fetchStudents = async (token) => {
+  const fetchStudents = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/api/students`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) setStudents(data);
-      else handleError(res.status, data.error);
-    } catch (err) {
-      setError('Failed to load students.');
-    } finally {
-      setStudentsLoading(false);
-    }
+      const querySnapshot = await getDocs(collection(db, 'students'));
+      const data = [];
+      querySnapshot.forEach(doc => data.push({id: doc.id, ...doc.data()}));
+      setStudents(data);
+    } catch (err) { setError('Failed to load students.'); }
+    finally { setStudentsLoading(false); }
   };
-
   const handleAddStudent = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch(`${getApiUrl()}/api/students`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify(studentForm)
-      });
-      if (res.ok) {
-        setStudentForm({ name: '', course: '', contactNumber: '', academicYear: '', branch: '', yearOfStudy: '', college: '' });
-        fetchStudents(getToken());
-      } else {
-        const data = await res.json();
-        handleError(res.status, data.error);
-      }
-    } catch (err) {
-      setError('Failed to add student.');
-    }
+      await addDoc(collection(db, 'students'), studentForm);
+      setStudentForm({ name: '', course: '', contactNumber: '', academicYear: '', branch: '', yearOfStudy: '', college: '' });
+      fetchStudents();
+    } catch (err) { setError('Failed to add student.'); }
   };
 
   const handleDeleteStudent = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this student?")) return;
+    if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`${getApiUrl()}/api/students/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      if (res.ok) fetchStudents(getToken());
-    } catch (err) {
-      setError('Failed to delete student.');
-    }
+      await deleteDoc(doc(db, 'students', id));
+      fetchStudents();
+    } catch (err) { setError('Failed to delete student.'); }
   };
 
   const handleDeleteAdmission = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this admission record permanently?")) return;
+    if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`${getApiUrl()}/api/admissions/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      if (res.ok) fetchAdmissions(getToken());
-    } catch (err) {
-      setError('Failed to delete admission.');
-    }
+      await deleteDoc(doc(db, 'admissions', id));
+      fetchAdmissions();
+    } catch (err) { setError('Failed to delete admission.'); }
   };
 
-  const fetchAdmissions = async (token) => {
+  const fetchAdmissions = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/api/admissions`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) setAdmissions(data);
-      else handleError(res.status, data.error);
-    } catch (err) {
-      setError('Failed to load admissions.');
-    } finally {
-      setAdmissionsLoading(false);
-    }
+      const querySnapshot = await getDocs(collection(db, 'admissions'));
+      const data = [];
+      querySnapshot.forEach(doc => data.push({id: doc.id, ...doc.data()}));
+      setAdmissions(data);
+    } catch (err) { setError('Failed to load admissions.'); }
+    finally { setAdmissionsLoading(false); }
   };
-
-  const fetchMessages = async (token) => {
+  const fetchMessages = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/api/messages`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) setMessages(data);
-      else handleError(res.status, data.error);
-    } catch (err) {
-      setError('Failed to load messages.');
-    } finally {
-      setMessagesLoading(false);
-    }
+      const querySnapshot = await getDocs(collection(db, 'messages'));
+      const data = [];
+      querySnapshot.forEach(doc => data.push({id: doc.id, ...doc.data()}));
+      setMessages(data);
+    } catch (err) { setError('Failed to load messages.'); }
+    finally { setMessagesLoading(false); }
   };
-
-  const fetchEvents = async (token) => {
+  const fetchEvents = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/api/events`);
-      const data = await res.json();
-      if (res.ok) setEvents(data);
-      else setError(data.error);
-    } catch (err) {
-      setError('Failed to load events.');
-    } finally {
-      setEventsLoading(false);
-    }
+      const querySnapshot = await getDocs(collection(db, 'events'));
+      const data = [];
+      querySnapshot.forEach(doc => data.push({id: doc.id, ...doc.data()}));
+      setEvents(data);
+    } catch (err) { setError('Failed to load events.'); }
+    finally { setEventsLoading(false); }
   };
-
   const loadPageContent = async (pageName) => {
     setError('');
     try {
-        const res = await fetch(`${getApiUrl()}/api/pages/${pageName}`);
-        if (res.ok) {
-            const data = await res.json();
-            setPageData(data);
-            setSelectedPage(pageName);
-        } else {
-            setError(`Failed to load ${pageName} page content. Did you seed the database?`);
-        }
-    } catch(err) { 
-        setError("Failed to load page content");
-    }
+      const docSnap = await getDoc(doc(db, 'pages', pageName));
+      if (docSnap.exists()) {
+        setPageData(JSON.parse(docSnap.data().content));
+      } else {
+        setPageData({}); 
+      }
+      setSelectedPage(pageName);
+    } catch(err) { setError("Failed to load page content"); }
   };
 
   const handleSavePageContent = async (e) => {
     e.preventDefault();
     try {
-        const res = await fetch(`${getApiUrl()}/api/pages/${selectedPage}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-            body: JSON.stringify(pageData)
-        });
-        if (res.ok) {
-            alert('Saved successfully! The public page will instantly reflect these changes.');
-        } else {
-            setError('Failed to save changes.');
-        }
-    } catch(err) { setError("Failed to save.")}
+      await setDoc(doc(db, 'pages', selectedPage), {
+        page_name: selectedPage,
+        content: JSON.stringify(pageData)
+      });
+      alert('Saved successfully!');
+    } catch(err) { setError("Failed to save.") }
   };
 
   const handleUploadPhoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const formData = new FormData();
-    formData.append('photo', file);
-
     try {
-        const res = await fetch(`${getApiUrl()}/api/upload`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${getToken()}` },
-            body: formData
-        });
-        const data = await res.json();
-        if (res.ok && data.url) {
-            setPageData({...pageData, images: [...(pageData.images || []), data.url]});
-        } else {
-            setError(data.error || 'Failed to upload photo');
-        }
-    } catch(err) {
-        setError("Network error during upload");
-    }
+      const storageRef = ref(storage, 'uploads/' + Date.now() + '_' + file.name);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setPageData({...pageData, images: [...(pageData.images || []), url]});
+    } catch(err) { setError("Network error during upload"); }
   };
 
   const handleRemovePhoto = (index) => {
@@ -238,51 +175,24 @@ const Admin = () => {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch(`${getApiUrl()}/api/events`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify(eventForm)
-      });
-      if (res.ok) {
-        setEventForm({ title: '', date: '', location: '', description: '', image: '' });
-        fetchEvents(getToken());
-      } else {
-        const data = await res.json();
-        handleError(res.status, data.error);
-      }
-    } catch (err) {
-      setError('Failed to add event.');
-    }
+      await addDoc(collection(db, 'events'), eventForm);
+      setEventForm({ title: '', date: '', location: '', description: '', image: '' });
+      fetchEvents();
+    } catch (err) { setError('Failed to add event.'); }
   };
 
   const handleDeleteEvent = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`${getApiUrl()}/api/events/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      if (res.ok) fetchEvents(getToken());
-      else {
-        const data = await res.json();
-        handleError(res.status, data.error);
-      }
-    } catch (err) {
-      setError('Failed to delete event.');
-    }
+      await deleteDoc(doc(db, 'events', id));
+      fetchEvents();
+    } catch (err) { setError('Failed to delete event.'); }
   };
 
-  const handleError = (status, errorMsg) => {
-    if (status === 401 || status === 403) {
-      localStorage.removeItem('adminToken');
-      navigate('/login');
-    } else {
-      setError(errorMsg || 'An error occurred.');
-    }
-  };
+  
 
-  const handleLogout = () => {
-      localStorage.removeItem('adminToken');
+  const handleLogout = async () => {
+      await firebaseSignOut(auth);
       navigate('/login');
   };
 

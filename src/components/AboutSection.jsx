@@ -1,3 +1,5 @@
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import React, { useState, useEffect } from 'react';
 import { FaUserGraduate, FaShieldAlt, FaBed } from 'react-icons/fa';
 
@@ -12,13 +14,13 @@ const AboutSection = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
-        const res = await fetch(`${apiUrl}/api/pages/home`);
-        if (res.ok) {
-          const data = await res.json();
-          setContent(data);
-        }
-      } catch (err) {}
+        const querySnapshot = await getDocs(collection(db, 'pages'));
+        querySnapshot.forEach((doc) => {
+          if (doc.id === 'home' || doc.data().page_name === 'home') {
+            setContent(JSON.parse(doc.data().content));
+          }
+        });
+      } catch (err) { console.error(err); }
     };
     fetchContent();
   }, []);
