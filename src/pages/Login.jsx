@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, provider, signInWithPopup, signInWithEmailAndPassword } from '../firebase';
+import { auth, provider, signInWithPopup, signInWithRedirect, signInWithEmailAndPassword } from '../firebase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -31,14 +31,12 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const cred = await signInWithPopup(auth, provider);
-      if (!ALLOWED_EMAILS.includes(cred.user.email)) {
-        throw new Error('Access Denied. You are not an Admin.');
-      }
-      navigate('/admin');
+      // Use redirect instead of popup to bypass strict browser popup blockers
+      await signInWithRedirect(auth, provider);
+      // The browser will redirect to Google. 
+      // When it returns, Admin.jsx's onAuthStateChanged will handle the rest!
     } catch (err) {
       setError(err.message || 'Google Login failed');
-    } finally {
       setLoading(false);
     }
   };
