@@ -1,54 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, provider, signInWithPopup, signInWithRedirect, signInWithEmailAndPassword } from '../firebase';
+import { auth, provider, signInWithRedirect, onAuthStateChanged } from '../firebase';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com', 'superadmin@kammahostel.com'];
 
-  const handleEmailLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      if (!ALLOWED_EMAILS.includes(cred.user.email)) {
-        throw new Error('Access Denied. You are not an Admin.');
-      }
-      navigate('/admin');
-    } catch (err) {
-      setError(err.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBypassLogin = async () => {
-    setError('');
-    setLoading(true);
-    const bypassEmail = 'superadmin@kammahostel.com';
-    const bypassPassword = 'adminpassword123';
-    try {
-      // Try to log in first
-      await signInWithEmailAndPassword(auth, bypassEmail, bypassPassword);
-      navigate('/admin');
-    } catch (err) {
-      // If user not found, create it!
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        try {
-          await createUserWithEmailAndPassword(auth, bypassEmail, bypassPassword);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (ALLOWED_EMAILS.includes(user.email)) {
           navigate('/admin');
-        } catch (createErr) {
-          setError(createErr.message);
+        } else {
+          setError('Access Denied. You are not an Admin.');
+          setLoading(false);
+          // Sign out unauthorized users immediately? Yes, but Admin.jsx handles that too.
         }
       } else {
-        setError(err.message || 'Login failed');
+        setLoading(false);
       }
-    } finally {
+    });
+    return () => unsubscribe();
+  }, [navigate]);
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      // Use redirect instead of popup to fix popup-blockers and cross-origin issues
+      await signInWithRedirect(auth, provider);
+    } catch (err) {
+      setError(err.message || 'Login failed');
       setLoading(false);
     }
   };
@@ -64,41 +48,20 @@ const Login = () => {
           </div>
         )}
 
-        <button 
-          onClick={handleBypassLogin} 
-          disabled={loading}
-          style={{ width: '100%', padding: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          Instant Admin Login (1-Click)
-        </button>
-
-        <div style={{ textAlign: 'center', margin: '1rem 0', color: 'gray' }}>OR</div>
-
-        <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Email</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', background: 'var(--color-bg)', color: 'var(--color-text)' }} 
-            />
+        {loading ? (
+          <div style={{ textAlign: 'center', color: 'gray', padding: '2rem' }}>
+            Checking authentication...
           </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Password</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', background: 'var(--color-bg)', color: 'var(--color-text)' }} 
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '0.75rem', marginTop: '0.5rem' }}>
-            {loading ? 'Logging in...' : 'Login with Email'}
+        ) : (
+          <button 
+            onClick={handleGoogleLogin} 
+            disabled={loading}
+            style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}
+          >
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '24px', background: 'white', borderRadius: '50%', padding: '2px' }} />
+            Sign in with Google
           </button>
-        </form>
+        )}
       </div>
     </div>
   );
