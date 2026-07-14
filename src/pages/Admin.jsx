@@ -63,8 +63,6 @@ const Admin = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-  const getApiUrl = () => import.meta.env.PROD ? '' : 'http://localhost:5000';
-  const getToken = () => localStorage.getItem('adminToken');
 
   const handleUpdateAdmissionStatus = async (id, status) => {
     try {
@@ -414,13 +412,12 @@ const Admin = () => {
                   <input type="file" accept="image/*" onChange={async (e) => {
                     const file = e.target.files[0];
                     if(!file) return;
-                    const formData = new FormData();
-                    formData.append('photo', file);
                     try {
-                      const res = await fetch(`${getApiUrl()}/api/upload`, { method: 'POST', headers: { 'Authorization': `Bearer ${getToken()}` }, body: formData });
-                      const data = await res.json();
-                      if (data.url) setEventForm({...eventForm, image: data.url});
-                    } catch(err) { console.error(err); }
+                      const storageRef = ref(storage, 'events/' + Date.now() + '_' + file.name);
+                      await uploadBytes(storageRef, file);
+                      const url = await getDownloadURL(storageRef);
+                      setEventForm({...eventForm, image: url});
+                    } catch(err) { console.error('Upload failed:', err); }
                   }} />
                   {eventForm.image && <img src={eventForm.image} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginTop: '1rem', borderRadius: '8px' }} />}
                 </div>
@@ -503,22 +500,17 @@ const Admin = () => {
                                                 <div key={idx} style={{ position: 'relative', border: '1px solid #ccc', padding: '1rem', borderRadius: '4px', display: 'flex', gap: '1rem' }}>
                                                     <div style={{ width: '120px', flexShrink: 0 }}>
                                                         <img src={profile.image || 'https://via.placeholder.com/120'} alt="Profile" style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '4px', marginBottom: '0.5rem', border: '1px solid #ddd' }} />
-                                                        <input type="file" accept="image/*" onChange={(e) => {
+                                                        <input type="file" accept="image/*" onChange={async (e) => {
                                                             const file = e.target.files[0];
                                                             if (!file) return;
-                                                            const formData = new FormData();
-                                                            formData.append('photo', file);
-                                                            fetch(`${getApiUrl()}/api/upload`, {
-                                                                method: 'POST',
-                                                                headers: { 'Authorization': `Bearer ${getToken()}` },
-                                                                body: formData
-                                                            }).then(res => res.json()).then(data => {
-                                                                if (data.url) {
-                                                                    const newProfiles = [...pageData.profiles];
-                                                                    newProfiles[idx].image = data.url;
-                                                                    setPageData({...pageData, profiles: newProfiles});
-                                                                }
-                                                            });
+                                                            try {
+                                                                const storageRef = ref(storage, 'profiles/' + Date.now() + '_' + file.name);
+                                                                await uploadBytes(storageRef, file);
+                                                                const url = await getDownloadURL(storageRef);
+                                                                const newProfiles = [...pageData.profiles];
+                                                                newProfiles[idx].image = url;
+                                                                setPageData({...pageData, profiles: newProfiles});
+                                                            } catch(err) { console.error('Upload failed:', err); }
                                                         }} style={{ width: '100%', fontSize: '0.75rem' }} />
                                                     </div>
                                                     <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
