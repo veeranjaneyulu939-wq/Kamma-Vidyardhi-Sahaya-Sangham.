@@ -7,6 +7,8 @@ try {
   
   console.log("Git init in dist...");
   const distPath = path.join(__dirname, 'dist');
+  const fs = require('fs');
+  fs.copyFileSync(path.join(distPath, 'index.html'), path.join(distPath, '404.html'));
   
   execSync('git init', {cwd: distPath, stdio: 'inherit'});
   execSync('git config user.name "bot"', {cwd: distPath, stdio: 'inherit'});
