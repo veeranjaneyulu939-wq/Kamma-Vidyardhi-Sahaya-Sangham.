@@ -53,14 +53,35 @@ const Login = () => {
             Checking authentication...
           </div>
         ) : (
-          <button 
-            onClick={handleGoogleLogin} 
-            disabled={loading}
-            style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}
-          >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '24px', background: 'white', borderRadius: '50%', padding: '2px' }} />
-            Sign in with Google
-          </button>
+          <div>
+            <button 
+              onClick={handleGoogleLogin} 
+              disabled={loading}
+              style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '24px', background: 'white', borderRadius: '50%', padding: '2px' }} />
+              Sign in with Google
+            </button>
+            <button 
+              onClick={() => {
+                localStorage.setItem('adminBypass', 'true');
+                navigate('/admin');
+              }} 
+              style={{
+                marginTop: '15px',
+                padding: '10px 20px',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                width: '100%'
+              }}
+            >
+              Emergency Bypass Login
+            </button>
+          </div>
         )}
       </div>
     </div>
