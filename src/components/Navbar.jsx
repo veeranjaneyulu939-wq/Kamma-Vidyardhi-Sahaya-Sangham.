@@ -49,7 +49,6 @@ const Navbar = () => {
           <Link to="/events">LATEST EVENTS</Link>
           <Link to="/gallery">GALLERY</Link>
           <Link to="/contact">CONTACT US</Link>
-          <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>ADMIN LOGIN</Link>
         </div>
       </nav>
 
