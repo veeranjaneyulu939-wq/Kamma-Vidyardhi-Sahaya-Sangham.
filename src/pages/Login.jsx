@@ -1,30 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth, signInWithEmailAndPassword, onAuthStateChanged } from '../firebase';
 
 const Login = () => {
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com', 'superadmin@kammahostel.com', 'kammahostelgnt1930@gmail.com'];
 
   useEffect(() => {
-    if (localStorage.getItem('adminBypass') === 'true') {
-      navigate('/admin');
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (ALLOWED_EMAILS.includes(user.email)) {
+          navigate('/admin');
+        } else {
+          setError('Access Denied. You are not an Admin.');
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
   }, [navigate]);
 
-  const handleLogin = (e) => {
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
-    // Check if email is in allowed list and password is correct
-    if (ALLOWED_EMAILS.includes(email.toLowerCase()) && password === 'kamma1930') {
-      localStorage.setItem('adminBypass', 'true');
-      localStorage.setItem('adminEmail', email.toLowerCase());
-      navigate('/admin');
-    } else {
-      setError('Invalid email or password. Please try again.');
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // navigation is handled by onAuthStateChanged
+    } catch (err) {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. Did you create this user in Firebase Console?');
+      } else {
+        setError(err.message || 'Login failed');
+      }
+      setLoading(false);
     }
   };
 
@@ -39,39 +54,45 @@ const Login = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input 
-            type="email" 
-            placeholder="Admin Email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc', width: '100%', fontSize: '1rem' }}
-          />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc', width: '100%', fontSize: '1rem' }}
-          />
-          <button 
-            type="submit"
-            style={{
-              padding: '12px',
-              backgroundColor: 'var(--color-primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              fontSize: '1.1rem'
-            }}
-          >
-            Secure Login
-          </button>
-        </form>
+        {loading ? (
+          <div style={{ textAlign: 'center', color: 'gray', padding: '2rem' }}>
+            Checking authentication...
+          </div>
+        ) : (
+          <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <input 
+              type="email" 
+              placeholder="Admin Email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc', width: '100%', fontSize: '1rem' }}
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc', width: '100%', fontSize: '1rem' }}
+            />
+            <button 
+              type="submit"
+              style={{
+                padding: '12px',
+                backgroundColor: 'var(--color-primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '1.1rem'
+              }}
+            >
+              Sign In
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

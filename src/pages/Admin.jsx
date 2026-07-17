@@ -45,14 +45,6 @@ const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem('adminBypass') === 'true') {
-      fetchMessages();
-      fetchAdmissions();
-      fetchStudents();
-      fetchEvents();
-      return;
-    }
-
     const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com', 'superadmin@kammahostel.com', 'kammahostelgnt1930@gmail.com'];
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
