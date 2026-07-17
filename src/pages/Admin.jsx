@@ -133,6 +133,22 @@ const Admin = () => {
     } catch (err) { setError('Failed to load events.'); }
     finally { setEventsLoading(false); }
   };
+  const getDefaultPageData = (pageName) => {
+    switch(pageName) {
+      case 'home': return { title: 'Welcome to Kamma Vidyarthi Sahaya Sangham', subtitle: 'A Home Away From Home', description: '' };
+      case 'history': return { title: 'Our History', subtitle: 'A century of serving students', timeline: [{ year: '1930', event: 'Founded' }] };
+      case 'past-presidents': return { title: 'Past Presidents & Secretaries', subtitle: 'Our esteemed leaders', profiles: [] };
+      case 'founders': return { title: 'Our Founders', subtitle: 'The visionaries', profiles: [] };
+      case 'governing-body': return { title: 'Governing Body', subtitle: 'Guiding the sangham', profiles: [] };
+      case 'management-committee': return { title: 'Management Committee', subtitle: 'Managing daily operations', profiles: [] };
+      case 'hostel': return { title: 'Boys Hostel', subtitle: 'Facilities and information', description: '', facilities: [] };
+      case 'donate': return { title: 'Make a Donation', subtitle: 'Support our cause', description: '', bankDetails: '', upiId: '' };
+      case 'gallery': return { title: 'Photo Gallery', subtitle: 'Memories and events', images: [] };
+      case 'contact': return { title: 'Contact Us', subtitle: 'Get in touch', address: '', phone1: '', phone2: '', email: '' };
+      default: return {};
+    }
+  };
+
   const loadPageContent = async (pageName) => {
     setError('');
     try {
@@ -140,7 +156,7 @@ const Admin = () => {
       if (docSnap.exists()) {
         setPageData(JSON.parse(docSnap.data().content));
       } else {
-        setPageData({}); 
+        setPageData(getDefaultPageData(pageName)); 
       }
       setSelectedPage(pageName);
     } catch(err) { setError("Failed to load page content"); }
