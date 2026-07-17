@@ -153,13 +153,21 @@ const Admin = () => {
     setError('');
     try {
       const docSnap = await getDoc(doc(db, 'pages', pageName));
-      if (docSnap.exists()) {
-        setPageData(JSON.parse(docSnap.data().content));
+      if (docSnap.exists() && docSnap.data().content) {
+        try {
+          setPageData(JSON.parse(docSnap.data().content));
+        } catch (e) {
+          console.error("JSON parse error:", e);
+          setPageData(getDefaultPageData(pageName));
+        }
       } else {
         setPageData(getDefaultPageData(pageName)); 
       }
       setSelectedPage(pageName);
-    } catch(err) { setError("Failed to load page content"); }
+    } catch(err) { 
+      console.error(err);
+      setError("Failed to load page content: " + err.message); 
+    }
   };
 
   const handleSavePageContent = async (e) => {
