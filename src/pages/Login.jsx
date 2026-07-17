@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, provider, signInWithRedirect, onAuthStateChanged } from '../firebase';
+import { auth, provider, signInWithRedirect, signInWithEmailAndPassword, onAuthStateChanged } from '../firebase';
 
 const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com', 'superadmin@kammahostel.com', 'kammahostelgnt1930@gmail.com'];
 
@@ -16,7 +18,6 @@ const Login = () => {
         } else {
           setError('Access Denied. You are not an Admin.');
           setLoading(false);
-          // Sign out unauthorized users immediately? Yes, but Admin.jsx handles that too.
         }
       } else {
         setLoading(false);
@@ -29,10 +30,22 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      // Use redirect instead of popup to fix popup-blockers and cross-origin issues
       await signInWithRedirect(auth, provider);
     } catch (err) {
       setError(err.message || 'Login failed');
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // navigation is handled by onAuthStateChanged
+    } catch (err) {
+      setError(err.message || 'Invalid email or password');
       setLoading(false);
     }
   };
@@ -54,6 +67,42 @@ const Login = () => {
           </div>
         ) : (
           <div>
+            <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
+              <input 
+                type="email" 
+                placeholder="Admin Email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', width: '100%' }}
+              />
+              <input 
+                type="password" 
+                placeholder="Password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', width: '100%' }}
+              />
+              <button 
+                type="submit"
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'var(--color-secondary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '1rem'
+                }}
+              >
+                Sign In with Email
+              </button>
+            </form>
+
+            <div style={{ textAlign: 'center', margin: '15px 0', color: '#666', fontWeight: 'bold' }}>OR</div>
+
             <button 
               onClick={handleGoogleLogin} 
               disabled={loading}
