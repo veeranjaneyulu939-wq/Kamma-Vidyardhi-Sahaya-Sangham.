@@ -1,52 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, provider, signInWithRedirect, signInWithEmailAndPassword, onAuthStateChanged } from '../firebase';
 
 const Login = () => {
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const ALLOWED_EMAILS = ['kvssgnt1930@gmail.com', 'kvssgnt@gmail.com', 'kvssvja1910@gmail.com', 'superadmin@kammahostel.com', 'kammahostelgnt1930@gmail.com'];
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (ALLOWED_EMAILS.includes(user.email)) {
-          navigate('/admin');
-        } else {
-          setError('Access Denied. You are not an Admin.');
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
+    if (localStorage.getItem('adminBypass') === 'true') {
+      navigate('/admin');
+    }
   }, [navigate]);
 
-  const handleGoogleLogin = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await signInWithRedirect(auth, provider);
-    } catch (err) {
-      setError(err.message || 'Login failed');
-      setLoading(false);
-    }
-  };
-
-  const handleEmailLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // navigation is handled by onAuthStateChanged
-    } catch (err) {
-      setError(err.message || 'Invalid email or password');
-      setLoading(false);
+    
+    // Master Password Check
+    if (password === 'kamma1930') {
+      localStorage.setItem('adminBypass', 'true');
+      navigate('/admin');
+    } else {
+      setError('Invalid master password. Please try again.');
     }
   };
 
@@ -61,77 +36,31 @@ const Login = () => {
           </div>
         )}
 
-        {loading ? (
-          <div style={{ textAlign: 'center', color: 'gray', padding: '2rem' }}>
-            Checking authentication...
-          </div>
-        ) : (
-          <div>
-            <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
-              <input 
-                type="email" 
-                placeholder="Admin Email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', width: '100%' }}
-              />
-              <input 
-                type="password" 
-                placeholder="Password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', width: '100%' }}
-              />
-              <button 
-                type="submit"
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'var(--color-secondary)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '1rem'
-                }}
-              >
-                Sign In with Email
-              </button>
-            </form>
-
-            <div style={{ textAlign: 'center', margin: '15px 0', color: '#666', fontWeight: 'bold' }}>OR</div>
-
-            <button 
-              onClick={handleGoogleLogin} 
-              disabled={loading}
-              style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '24px', background: 'white', borderRadius: '50%', padding: '2px' }} />
-              Sign in with Google
-            </button>
-            <button 
-              onClick={() => {
-                localStorage.setItem('adminBypass', 'true');
-                navigate('/admin');
-              }} 
-              style={{
-                marginTop: '15px',
-                padding: '10px 20px',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                width: '100%'
-              }}
-            >
-              Emergency Bypass Login
-            </button>
-          </div>
-        )}
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input 
+            type="password" 
+            placeholder="Enter Master Password" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc', width: '100%', fontSize: '1rem' }}
+          />
+          <button 
+            type="submit"
+            style={{
+              padding: '12px',
+              backgroundColor: 'var(--color-primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '1.1rem'
+            }}
+          >
+            Access Dashboard
+          </button>
+        </form>
       </div>
     </div>
   );
