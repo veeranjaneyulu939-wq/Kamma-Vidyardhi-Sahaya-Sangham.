@@ -140,7 +140,15 @@ const Admin = () => {
       case 'past-presidents': return { title: 'Past Presidents & Secretaries', subtitle: 'Our esteemed leaders', profiles: [] };
       case 'founders': return { title: 'Our Founders', subtitle: 'The visionaries', profiles: [] };
       case 'governing-body': return { title: 'Governing Body', subtitle: 'Guiding the sangham', profiles: [] };
-      case 'management-committee': return { title: 'Management Committee', subtitle: 'Managing daily operations', profiles: [] };
+      case 'management-committee': return { 
+          title: 'Management Committee', 
+          subtitle: 'Managing daily operations', 
+          profiles: [
+              { name: '', role: 'Honorary President', bio: '', image: '' },
+              { name: '', role: 'President', bio: '', image: '' },
+              { name: '', role: 'Secretary', bio: '', image: '' }
+          ] 
+      };
       case 'hostel': return { title: 'Boys Hostel', subtitle: 'Facilities and information', description: '', facilities: [] };
       case 'donate': return { title: 'Make a Donation', subtitle: 'Support our cause', description: '', bankDetails: '', upiId: '' };
       case 'gallery': return { title: 'Photo Gallery', subtitle: 'Memories and events', images: [] };
