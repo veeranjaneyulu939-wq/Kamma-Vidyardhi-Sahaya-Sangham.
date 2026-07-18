@@ -228,7 +228,7 @@ const Admin = () => {
     <div className="section" style={{ background: 'var(--color-bg)', minHeight: '80vh' }}>
       <div className="container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h2 className="section-title" style={{ marginBottom: 0 }}>Admin Dashboard</h2>
+          <h2 className="section-title" style={{ marginBottom: 0 }}>Admin Dashboard (v2)</h2>
           <button onClick={handleLogout} className="btn" style={{ background: '#ef4444', color: 'white' }}>Logout</button>
         </div>
 
