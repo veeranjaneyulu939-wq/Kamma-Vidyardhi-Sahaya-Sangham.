@@ -163,7 +163,13 @@ const Admin = () => {
       const docSnap = await getDoc(doc(db, 'pages', pageName));
       if (docSnap.exists() && docSnap.data().content) {
         try {
-          setPageData(JSON.parse(docSnap.data().content));
+          const parsedData = JSON.parse(docSnap.data().content);
+          if (Object.keys(parsedData).length === 0) {
+              setPageData(getDefaultPageData(pageName));
+          } else {
+              // Merge with default data in case we added new fields to the schema later
+              setPageData({ ...getDefaultPageData(pageName), ...parsedData });
+          }
         } catch (e) {
           console.error("JSON parse error:", e);
           setPageData(getDefaultPageData(pageName));
