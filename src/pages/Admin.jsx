@@ -40,6 +40,11 @@ const Admin = () => {
   // Pages state
   const [selectedPage, setSelectedPage] = useState('');
   const [pageData, setPageData] = useState(null);
+  
+  // Gallery state
+  const [galleryPhotos, setGalleryPhotos] = useState([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [galleryForm, setGalleryForm] = useState({ title: '', image: null });
 
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -54,10 +59,10 @@ const Admin = () => {
           navigate('/login');
         });
       } else {
-        fetchMessages();
         fetchAdmissions();
         fetchStudents();
         fetchEvents();
+        fetchGalleryPhotos();
       }
     });
     return () => unsubscribe();
@@ -124,6 +129,48 @@ const Admin = () => {
     } catch (err) { setError('Failed to load messages.'); }
     finally { setMessagesLoading(false); }
   };
+  const fetchGalleryPhotos = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'gallery_photos'));
+      const data = [];
+      querySnapshot.forEach(doc => data.push({id: doc.id, ...doc.data()}));
+      setGalleryPhotos(data.reverse());
+    } catch (err) { console.error('Failed to load gallery photos.'); }
+    finally { setGalleryLoading(false); }
+  };
+
+  const handleGallerySubmit = async (e) => {
+    e.preventDefault();
+    if (!galleryForm.image) return alert("Please select an image");
+    
+    try {
+      const imageRef = ref(storage, `gallery/${Date.now()}_${galleryForm.image.name}`);
+      await uploadBytes(imageRef, galleryForm.image);
+      const imageUrl = await getDownloadURL(imageRef);
+
+      await addDoc(collection(db, 'gallery_photos'), {
+        title: galleryForm.title || 'Untitled',
+        imageUrl: imageUrl,
+        createdAt: new Date().toISOString()
+      });
+
+      setGalleryForm({ title: '', image: null });
+      fetchGalleryPhotos();
+      alert('Photo uploaded successfully!');
+    } catch (err) { 
+      console.error(err);
+      alert('Error uploading photo'); 
+    }
+  };
+
+  const handleDeleteGalleryPhoto = async (id) => {
+    if (!window.confirm("Are you sure?")) return;
+    try {
+      await deleteDoc(doc(db, 'gallery_photos', id));
+      fetchGalleryPhotos();
+    } catch (err) { alert('Error deleting photo'); }
+  };
+
   const fetchEvents = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'events'));
@@ -276,12 +323,13 @@ const Admin = () => {
             Manage Events
           </button>
           <button 
-            onClick={() => setActiveTab('pages')}
-            className="btn" 
+            onClick={() => setActiveTab('pages')} 
             style={{ background: activeTab === 'pages' ? 'var(--color-primary)' : '#cbd5e0', color: activeTab === 'pages' ? 'white' : '#4a5568' }}
-          >
-            Manage Page Text
-          </button>
+            className="tab-btn">Page Content</button>
+          <button 
+            onClick={() => setActiveTab('gallery')} 
+            style={{ background: activeTab === 'gallery' ? 'var(--color-primary)' : '#cbd5e0', color: activeTab === 'gallery' ? 'white' : '#4a5568' }}
+            className="tab-btn">Photo Gallery</button>
         </div>
 
         {error && (
@@ -484,6 +532,31 @@ const Admin = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'gallery' && (
+          <div className="card">
+            <h3>Manage Photo Gallery</h3>
+            <form onSubmit={handleGallerySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+              <input type="text" placeholder="Photo Title (Optional)" value={galleryForm.title} onChange={e => setGalleryForm({...galleryForm, title: e.target.value})} className="form-control" />
+              <input type="file" accept="image/*" onChange={e => setGalleryForm({...galleryForm, image: e.target.files[0]})} className="form-control" required />
+              <button type="submit" className="btn btn-primary">Upload Photo</button>
+            </form>
+            
+            {galleryLoading ? <p>Loading photos...</p> : (
+              <div className="grid grid-cols-3" style={{ gap: '1rem' }}>
+                {galleryPhotos.map(photo => (
+                  <div key={photo.id} style={{ position: 'relative', border: '1px solid #e2e8f0', padding: '0.5rem', borderRadius: '4px' }}>
+                    <img src={photo.imageUrl} alt={photo.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
+                    <p style={{ margin: '0.5rem 0', fontWeight: 'bold' }}>{photo.title}</p>
+                    <button onClick={() => handleDeleteGalleryPhoto(photo.id)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'red', color: 'white', border: 'none', padding: '5px', cursor: 'pointer', borderRadius: '50%' }}>
+                      <FaTrashAlt />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

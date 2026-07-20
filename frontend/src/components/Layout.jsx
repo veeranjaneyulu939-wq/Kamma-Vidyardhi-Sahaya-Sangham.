@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, CheckSquare, FileText, QrCode, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, CheckSquare, FileText, QrCode, LogOut, Shield } from 'lucide-react';
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const Layout = () => {
     { name: 'Mark Attendance', path: '/attendance', icon: <CheckSquare size={20} /> },
     { name: 'Reports', path: '/reports', icon: <FileText size={20} /> },
     { name: 'QR Codes', path: '/qr-codes', icon: <QrCode size={20} /> },
+    { name: 'Admin Settings', path: '/admins', icon: <Shield size={20} /> },
   ];
 
   return (

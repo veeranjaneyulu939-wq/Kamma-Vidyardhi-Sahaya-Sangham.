@@ -11,13 +11,17 @@ const app = express();
 app.use(cors());
 app.use(express.json({ extended: false }));
 
-// Initialize Firebase
-require('./config/firebase');
+// Initialize Database
+require('./config/db');
 
 // Define Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/gallery', require('./routes/gallery'));
+
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const PORT = process.env.PORT || 5000;
 

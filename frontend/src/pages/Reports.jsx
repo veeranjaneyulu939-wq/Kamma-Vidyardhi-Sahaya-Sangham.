@@ -12,7 +12,7 @@ const Reports = () => {
       // but attach the token if needed
       
       const token = localStorage.getItem('token');
-      const url = `http://localhost:5000/api/attendance/export/pdf/${date}?token=${token}`;
+      const url = `http://${window.location.hostname}:5000/api/attendance/export/pdf/${date}?token=${token}`;
       window.open(url, '_blank');
     } catch (err) {
       console.error("Download failed", err);
@@ -47,31 +47,75 @@ const Reports = () => {
               </div>
             </div>
             
-            <button 
-              onClick={handleDownloadPDF}
-              className="w-full flex justify-center items-center space-x-2 bg-navy text-white py-3 px-4 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              <Download size={20} />
-              <span>Download PDF Report</span>
-            </button>
+            <div className="flex space-x-4">
+              <button 
+                onClick={handleDownloadPDF}
+                className="w-1/2 flex justify-center items-center space-x-2 bg-navy text-white py-3 px-4 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                <Download size={20} />
+                <span>PDF Report</span>
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem('token');
+                    // Dynamically point to the backend port
+                    const url = `http://${window.location.hostname}:5000/api/attendance/export/excel/${date}?token=${token}`;
+                    window.open(url, '_blank');
+                  } catch (err) {
+                    console.error("Download failed", err);
+                    alert("Failed to download Excel. Please check server connection.");
+                  }
+                }}
+                className="w-1/2 flex justify-center items-center space-x-2 bg-green-700 text-white py-3 px-4 rounded-lg hover:bg-green-800 transition-colors"
+              >
+                <Download size={20} />
+                <span>Excel Sheet</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Placeholder for Monthly Report Card */}
-        <div className="bg-white p-8 rounded-lg shadow-sm border-t-4 border-gold opacity-60">
+        {/* Monthly Analytics Card */}
+        <div className="bg-white p-8 rounded-lg shadow-sm border-t-4 border-gold">
           <div className="flex items-center space-x-3 mb-4">
             <FileText className="text-navy" size={28} />
             <h2 className="text-xl font-semibold text-gray-800">Monthly Analytics</h2>
           </div>
-          <p className="text-gray-500 mb-6">Generate detailed Excel sheets calculating monthly percentage per student. (Coming Soon)</p>
+          <p className="text-gray-500 mb-6">Generate detailed Excel sheets calculating monthly percentages for all students.</p>
           
-          <button 
-            disabled
-            className="w-full flex justify-center items-center space-x-2 bg-gray-200 text-gray-500 py-3 px-4 rounded-lg cursor-not-allowed"
-          >
-            <Download size={20} />
-            <span>Download Excel Data</span>
-          </button>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Month</label>
+              <div className="relative">
+                <input 
+                  type="month" 
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy"
+                  value={date.substring(0, 7)} // Get YYYY-MM
+                  onChange={(e) => setDate(e.target.value + '-01')}
+                />
+                <Calendar className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              </div>
+            </div>
+
+            <button 
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem('token');
+                  const month = date.substring(0, 7);
+                  const url = `http://${window.location.hostname}:5000/api/attendance/export/monthly/${month}?token=${token}`;
+                  window.open(url, '_blank');
+                } catch (err) {
+                  console.error("Download failed", err);
+                  alert("Failed to download Excel. Please check server connection.");
+                }
+              }}
+              className="w-full flex justify-center items-center space-x-2 bg-green-700 text-white py-3 px-4 rounded-lg hover:bg-green-800 transition-colors"
+            >
+              <Download size={20} />
+              <span>Download Excel Data</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

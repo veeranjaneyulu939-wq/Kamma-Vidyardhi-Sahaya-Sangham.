@@ -6,6 +6,7 @@ import Students from './pages/Students';
 import Attendance from './pages/Attendance';
 import Reports from './pages/Reports';
 import QRCodes from './pages/QRCodes';
+import Admins from './pages/Admins';
 import Layout from './components/Layout';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
           <Route path="attendance" element={<Attendance />} />
           <Route path="reports" element={<Reports />} />
           <Route path="qr-codes" element={<QRCodes />} />
+          <Route path="admins" element={<Admins />} />
         </Route>
       </Routes>
     </Router>
