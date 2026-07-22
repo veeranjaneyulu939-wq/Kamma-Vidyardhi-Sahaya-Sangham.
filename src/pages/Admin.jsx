@@ -6,6 +6,38 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { FaTrashAlt } from 'react-icons/fa';
 
+// Helper to compress image to base64 under 1MB for Firestore
+const compressImage = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = event => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) { height = Math.round(height *= MAX_WIDTH / width); width = MAX_WIDTH; }
+        } else {
+          if (height > MAX_HEIGHT) { width = Math.round(width *= MAX_HEIGHT / height); height = MAX_HEIGHT; }
+        }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        // Compress with 0.7 quality JPEG
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 const generateAcademicYears = () => {
   const currentYear = new Date().getFullYear();
   const years = [];
@@ -139,27 +171,28 @@ const Admin = () => {
     finally { setGalleryLoading(false); }
   };
 
+  const [uploadLoading, setUploadLoading] = useState(false);
+
   const handleGallerySubmit = async (e) => {
     e.preventDefault();
     if (!galleryForm.image) return alert("Please select an image");
     
+    setUploadLoading(true);
     try {
-      const imageRef = ref(storage, `gallery/${Date.now()}_${galleryForm.image.name}`);
-      await uploadBytes(imageRef, galleryForm.image);
-      const imageUrl = await getDownloadURL(imageRef);
-
+      const base64String = await compressImage(galleryForm.image);
       await addDoc(collection(db, 'gallery_photos'), {
         title: galleryForm.title || 'Untitled',
-        imageUrl: imageUrl,
+        imageUrl: base64String,
         createdAt: new Date().toISOString()
       });
-
+      
       setGalleryForm({ title: '', image: null });
       fetchGalleryPhotos();
       alert('Photo uploaded successfully!');
     } catch (err) { 
-      console.error(err);
-      alert('Error uploading photo'); 
+      console.error("Upload error:", err);
+      alert('Error uploading photo: ' + err.message); 
+      setUploadLoading(false);
     }
   };
 
@@ -246,10 +279,8 @@ const Admin = () => {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      const storageRef = ref(storage, 'uploads/' + Date.now() + '_' + file.name);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      setPageData({...pageData, images: [...(pageData.images || []), url]});
+      const base64String = await compressImage(file);
+      setPageData({...pageData, images: [...(pageData.images || []), base64String]});
     } catch(err) { setError("Network error during upload"); }
   };
 
@@ -500,10 +531,8 @@ const Admin = () => {
                     const file = e.target.files[0];
                     if(!file) return;
                     try {
-                      const storageRef = ref(storage, 'events/' + Date.now() + '_' + file.name);
-                      await uploadBytes(storageRef, file);
-                      const url = await getDownloadURL(storageRef);
-                      setEventForm({...eventForm, image: url});
+                      const base64String = await compressImage(file);
+                      setEventForm({...eventForm, image: base64String});
                     } catch(err) { console.error('Upload failed:', err); }
                   }} />
                   {eventForm.image && <img src={eventForm.image} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginTop: '1rem', borderRadius: '8px' }} />}
@@ -541,7 +570,9 @@ const Admin = () => {
             <form onSubmit={handleGallerySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
               <input type="text" placeholder="Photo Title (Optional)" value={galleryForm.title} onChange={e => setGalleryForm({...galleryForm, title: e.target.value})} className="form-control" />
               <input type="file" accept="image/*" onChange={e => setGalleryForm({...galleryForm, image: e.target.files[0]})} className="form-control" required />
-              <button type="submit" className="btn btn-primary">Upload Photo</button>
+              <button type="submit" className="btn btn-primary" disabled={uploadLoading}>
+                {uploadLoading ? 'Uploading...' : 'Upload Photo'}
+              </button>
             </form>
             
             {galleryLoading ? <p>Loading photos...</p> : (
@@ -616,11 +647,9 @@ const Admin = () => {
                                                             const file = e.target.files[0];
                                                             if (!file) return;
                                                             try {
-                                                                const storageRef = ref(storage, 'profiles/' + Date.now() + '_' + file.name);
-                                                                await uploadBytes(storageRef, file);
-                                                                const url = await getDownloadURL(storageRef);
+                                                                const base64String = await compressImage(file);
                                                                 const newProfiles = [...pageData.profiles];
-                                                                newProfiles[idx].image = url;
+                                                                newProfiles[idx].image = base64String;
                                                                 setPageData({...pageData, profiles: newProfiles});
                                                             } catch(err) { console.error('Upload failed:', err); }
                                                         }} style={{ width: '100%', fontSize: '0.75rem' }} />

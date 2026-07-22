@@ -1,19 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { initDB } = require('../config/db');
+const Student = require('../models/Student');
+const Attendance = require('../models/Attendance');
 
 // @route   GET api/attendance/stats
 router.get('/stats', auth, async (req, res) => {
   try {
-    const db = await initDB();
-    
-    const countRes = await db.get('SELECT COUNT(*) as count FROM students');
-    const totalStudents = countRes.count;
-
+    const totalStudents = await Student.countDocuments();
     const today = new Date().toISOString().split('T')[0];
 
-    const records = await db.all('SELECT status FROM attendance WHERE date = ?', [today]);
+    const records = await Attendance.find({ date: today });
     
     let present = 0, absent = 0, leave = 0;
     records.forEach(doc => {
@@ -32,9 +29,9 @@ router.get('/stats', auth, async (req, res) => {
 // @route   GET api/attendance/date/:date
 router.get('/date/:date', auth, async (req, res) => {
   try {
-    const db = await initDB();
-    const records = await db.all('SELECT studentId as student, status FROM attendance WHERE date = ?', [req.params.date]);
-    res.json(records);
+    const records = await Attendance.find({ date: req.params.date });
+    const mapped = records.map(r => ({ student: r.studentId, status: r.status }));
+    res.json(mapped);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -45,18 +42,13 @@ router.get('/date/:date', auth, async (req, res) => {
 router.post('/mark', auth, async (req, res) => {
   const { date, records } = req.body;
   try {
-    const db = await initDB();
-    await db.exec('BEGIN TRANSACTION');
-    
     for (let r of records) {
-      await db.run(
-        `INSERT INTO attendance (date, studentId, status) VALUES (?, ?, ?)
-         ON CONFLICT(date, studentId) DO UPDATE SET status=excluded.status`,
-        [date, r.studentId, r.status]
+      await Attendance.findOneAndUpdate(
+        { date, studentId: r.studentId },
+        { status: r.status },
+        { upsert: true, new: true }
       );
     }
-    
-    await db.exec('COMMIT');
     res.json({ msg: 'Attendance saved' });
   } catch (err) {
     console.error(err.message);
@@ -73,16 +65,15 @@ router.get('/export/pdf/:date', async (req, res) => {
     const secret = process.env.JWT_SECRET || 'secret';
     try { jwt.verify(token, secret); } catch(e) { return res.status(401).send('Invalid token'); }
 
-    const db = await initDB();
     const date = req.params.date;
     
-    // Join attendance with students to get names and status
-    const records = await db.all(`
-      SELECT s.hostelId, s.studentName, s.roomNo, a.status 
-      FROM students s 
-      LEFT JOIN attendance a ON s.id = a.studentId AND a.date = ?
-      ORDER BY s.hostelId
-    `, [date]);
+    const students = await Student.find().sort({ hostelId: 1 }).lean();
+    const attendances = await Attendance.find({ date }).lean();
+    
+    const attendanceMap = {};
+    attendances.forEach(a => {
+      attendanceMap[a.studentId.toString()] = a.status;
+    });
 
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument();
@@ -97,8 +88,8 @@ router.get('/export/pdf/:date', async (req, res) => {
 
     let present = 0, absent = 0, leave = 0, notMarked = 0;
 
-    records.forEach(r => {
-      const status = r.status || 'Not Marked';
+    students.forEach(s => {
+      const status = attendanceMap[s._id.toString()] || 'Not Marked';
       if(status === 'Present') present++;
       else if(status === 'Absent') absent++;
       else if(status === 'Leave') leave++;
@@ -109,9 +100,9 @@ router.get('/export/pdf/:date', async (req, res) => {
     doc.moveDown();
 
     doc.fontSize(10);
-    records.forEach(r => {
-      const status = r.status || 'Not Marked';
-      doc.text(`[${r.hostelId}] ${r.studentName} (Room: ${r.roomNo || 'N/A'}) - ${status}`);
+    students.forEach(s => {
+      const status = attendanceMap[s._id.toString()] || 'Not Marked';
+      doc.text(`[${s.hostelId}] ${s.studentName} (Room: ${s.roomNo || 'N/A'}) - ${status}`);
     });
 
     doc.end();
@@ -130,44 +121,52 @@ router.get('/export/excel/:date', async (req, res) => {
     const secret = process.env.JWT_SECRET || 'secret';
     try { jwt.verify(token, secret); } catch(e) { return res.status(401).send('Invalid token'); }
 
-    const db = await initDB();
     const date = req.params.date;
     
-    const records = await db.all(`
-      SELECT 
-        s.id, s.hostelId, s.studentName, s.phoneNumber, a.status as todayStatus,
-        (SELECT COUNT(*) FROM attendance WHERE studentId = s.id AND status = 'Present') as presentDays,
-        (SELECT COUNT(*) FROM attendance WHERE studentId = s.id) as totalDays
-      FROM students s 
-      LEFT JOIN attendance a ON s.id = a.studentId AND a.date = ?
-      ORDER BY s.hostelId
-    `, [date]);
+    const students = await Student.find().sort({ hostelId: 1 }).lean();
+    const allAttendances = await Attendance.find().lean();
+    
+    const todayMap = {};
+    const presentCountMap = {};
+    const totalCountMap = {};
+    
+    allAttendances.forEach(a => {
+      const sId = a.studentId.toString();
+      if (!totalCountMap[sId]) totalCountMap[sId] = 0;
+      if (!presentCountMap[sId]) presentCountMap[sId] = 0;
+      
+      totalCountMap[sId]++;
+      if (a.status === 'Present') presentCountMap[sId]++;
+      if (a.date === date) todayMap[sId] = a.status;
+    });
 
     const xlsx = require('xlsx');
     
-    // Calculate daily overview
     let dailyPresent = 0;
-    records.forEach(r => {
-      if (r.todayStatus === 'Present') dailyPresent++;
+    students.forEach(s => {
+      const status = todayMap[s._id.toString()];
+      if (status === 'Present') dailyPresent++;
     });
-    const dailyPercentage = records.length > 0 ? Math.round((dailyPresent / records.length) * 100) : 0;
+    const dailyPercentage = students.length > 0 ? Math.round((dailyPresent / students.length) * 100) : 0;
 
-    const excelData = records.map(r => {
-      const histPercentage = r.totalDays > 0 ? Math.round((r.presentDays / r.totalDays) * 100) + '%' : 'N/A';
+    const excelData = students.map(s => {
+      const sId = s._id.toString();
+      const tDays = totalCountMap[sId] || 0;
+      const pDays = presentCountMap[sId] || 0;
+      const histPercentage = tDays > 0 ? Math.round((pDays / tDays) * 100) + '%' : 'N/A';
       return {
-        "Hostel ID": r.hostelId,
-        "Student Name": r.studentName,
-        "Phone Number": r.phoneNumber || 'N/A',
-        "Today's Status": r.todayStatus || 'Not Marked',
+        "Hostel ID": s.hostelId,
+        "Student Name": s.studentName,
+        "Phone Number": s.phoneNumber || 'N/A',
+        "Today's Status": todayMap[sId] || 'Not Marked',
         "Overall Attendance %": histPercentage
       };
     });
 
     const worksheet = xlsx.utils.json_to_sheet(excelData);
     
-    // Add a daily overview row at the bottom
     xlsx.utils.sheet_add_json(worksheet, [
-      {}, // Empty row for spacing
+      {}, 
       { "Hostel ID": "DAILY OVERVIEW", "Student Name": "Total Present:", "Phone Number": dailyPresent, "Today's Status": "Overall %:", "Overall Attendance %": `${dailyPercentage}%` }
     ], { skipHeader: true, origin: -1 });
 
@@ -186,7 +185,6 @@ router.get('/export/excel/:date', async (req, res) => {
 });
 
 // @route   GET api/attendance/export/monthly/:month
-// :month format expected as YYYY-MM
 router.get('/export/monthly/:month', async (req, res) => {
   try {
     const token = req.query.token;
@@ -195,30 +193,31 @@ router.get('/export/monthly/:month', async (req, res) => {
     const secret = process.env.JWT_SECRET || 'secret';
     try { jwt.verify(token, secret); } catch(e) { return res.status(401).send('Invalid token'); }
 
-    const db = await initDB();
     const month = req.params.month; // e.g. "2026-07"
     
-    // Find total distinct working days in that month
-    const daysRes = await db.get(`SELECT COUNT(DISTINCT date) as totalWorkingDays FROM attendance WHERE date LIKE ?`, [`${month}-%`]);
-    const totalWorkingDays = daysRes.totalWorkingDays || 0;
-
-    const students = await db.all('SELECT id, hostelId, studentName, college, phoneNumber FROM students ORDER BY hostelId');
+    const students = await Student.find().sort({ hostelId: 1 }).lean();
+    const monthlyAttendances = await Attendance.find({ date: { $regex: '^' + month } }).lean();
     
-    const excelData = [];
-    for (let s of students) {
-      const presentRes = await db.get(`SELECT COUNT(*) as presentCount FROM attendance WHERE studentId = ? AND date LIKE ? AND status = 'Present'`, [s.id, `${month}-%`]);
-      const absentRes = await db.get(`SELECT COUNT(*) as absentCount FROM attendance WHERE studentId = ? AND date LIKE ? AND status = 'Absent'`, [s.id, `${month}-%`]);
-      const leaveRes = await db.get(`SELECT COUNT(*) as leaveCount FROM attendance WHERE studentId = ? AND date LIKE ? AND status = 'Leave'`, [s.id, `${month}-%`]);
+    const uniqueDates = new Set();
+    monthlyAttendances.forEach(a => uniqueDates.add(a.date));
+    const totalWorkingDays = uniqueDates.size;
+    
+    const excelData = students.map(s => {
+      const sId = s._id.toString();
+      let present = 0, absent = 0, leave = 0;
       
-      const present = presentRes.presentCount;
-      const absent = absentRes.absentCount;
-      const leave = leaveRes.leaveCount;
+      monthlyAttendances.forEach(a => {
+        if (a.studentId.toString() === sId) {
+          if (a.status === 'Present') present++;
+          if (a.status === 'Absent') absent++;
+          if (a.status === 'Leave') leave++;
+        }
+      });
+      
       const totalMarked = present + absent + leave;
-      
-      // Percentage based on total working days (so if they missed days, it counts against them)
       const percentage = totalWorkingDays > 0 ? Math.round((present / totalWorkingDays) * 100) + '%' : 'N/A';
 
-      excelData.push({
+      return {
         "Hostel ID": s.hostelId,
         "Student Name": s.studentName,
         "College": s.college,
@@ -228,13 +227,12 @@ router.get('/export/monthly/:month', async (req, res) => {
         "Leave": leave,
         "Total Marked Days": totalMarked,
         "Monthly Attendance %": percentage
-      });
-    }
+      };
+    });
 
     const xlsx = require('xlsx');
     const worksheet = xlsx.utils.json_to_sheet(excelData);
     
-    // Add Summary Row
     xlsx.utils.sheet_add_json(worksheet, [
       {}, 
       { "Hostel ID": "MONTHLY SUMMARY", "Student Name": `Total Working Days: ${totalWorkingDays}` }

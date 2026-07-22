@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, CheckSquare, FileText, QrCode, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, CheckSquare, FileText, LogOut } from 'lucide-react';
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -16,18 +16,20 @@ const Layout = () => {
     { name: 'Students', path: '/students', icon: <Users size={20} /> },
     { name: 'Mark Attendance', path: '/attendance', icon: <CheckSquare size={20} /> },
     { name: 'Reports', path: '/reports', icon: <FileText size={20} /> },
-    { name: 'QR Codes', path: '/qr-codes', icon: <QrCode size={20} /> },
-    { name: 'Admin Settings', path: '/admins', icon: <Shield size={20} /> },
   ];
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div className="w-64 bg-navy text-white flex flex-col">
-        <div className="p-4 flex items-center justify-center border-b border-gray-700">
-          {/* Use uploaded logo when available, for now placeholder text */}
+        <div className="p-4 flex flex-col items-center justify-center border-b border-gray-700">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-16 h-16 rounded-full border-2 border-gold mb-3 object-cover shadow-md"
+          />
           <div className="text-center">
-            <h1 className="text-gold font-bold text-xl">Kamma Hostel</h1>
+            <h1 className="text-gold font-bold text-lg">Kamma Hostel</h1>
             <p className="text-xs text-gray-300">Attendance System</p>
           </div>
         </div>

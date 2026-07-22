@@ -12,7 +12,7 @@ const Reports = () => {
       // but attach the token if needed
       
       const token = localStorage.getItem('token');
-      const url = `http://${window.location.hostname}:5000/api/attendance/export/pdf/${date}?token=${token}`;
+      const url = `https://kamma-backend-939.loca.lt/api/attendance/export/pdf/${date}?token=${token}`;
       window.open(url, '_blank');
     } catch (err) {
       console.error("Download failed", err);
@@ -60,7 +60,7 @@ const Reports = () => {
                   try {
                     const token = localStorage.getItem('token');
                     // Dynamically point to the backend port
-                    const url = `http://${window.location.hostname}:5000/api/attendance/export/excel/${date}?token=${token}`;
+                    const url = `https://kamma-backend-939.loca.lt/api/attendance/export/excel/${date}?token=${token}`;
                     window.open(url, '_blank');
                   } catch (err) {
                     console.error("Download failed", err);
@@ -103,7 +103,7 @@ const Reports = () => {
                 try {
                   const token = localStorage.getItem('token');
                   const month = date.substring(0, 7);
-                  const url = `http://${window.location.hostname}:5000/api/attendance/export/monthly/${month}?token=${token}`;
+                  const url = `https://kamma-backend-939.loca.lt/api/attendance/export/monthly/${month}?token=${token}`;
                   window.open(url, '_blank');
                 } catch (err) {
                   console.error("Download failed", err);

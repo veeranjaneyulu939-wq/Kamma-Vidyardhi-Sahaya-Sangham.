@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // Dynamically points to the backend port on whichever IP you are viewing from
-  baseURL: `http://${window.location.hostname}:5000/api`,
+  // Point to the global localtunnel backend
+  baseURL: `https://kamma-backend-939.loca.lt/api`,
 });
 
 // Add a request interceptor to attach the JWT token to every request
@@ -13,6 +13,8 @@ api.interceptors.request.use(
       // The backend auth middleware expects x-auth-token header
       config.headers['x-auth-token'] = token;
     }
+    // Bypass localtunnel warning screen for API requests
+    config.headers['Bypass-Tunnel-Reminder'] = 'true';
     return config;
   },
   (error) => Promise.reject(error)

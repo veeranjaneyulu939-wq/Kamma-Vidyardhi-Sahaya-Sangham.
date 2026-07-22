@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { initDB } = require('../config/db');
 const multer = require('multer');
 const xlsx = require('xlsx');
+
+const Student = require('../models/Student');
+const Attendance = require('../models/Attendance');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -11,11 +13,8 @@ const upload = multer({ storage: storage });
 // @route   GET api/students
 router.get('/', auth, async (req, res) => {
   try {
-    const db = await initDB();
-    const students = await db.all('SELECT * FROM students ORDER BY hostelId');
-    // Map id to _id for frontend compatibility
-    const mapped = students.map(s => ({ ...s, _id: s.id }));
-    res.json(mapped);
+    const students = await Student.find().sort({ hostelId: 1 });
+    res.json(students);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -33,13 +32,9 @@ router.post('/upload', auth, upload.single('file'), async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    const db = await initDB();
     let addedCount = 0;
-
-    await db.exec('BEGIN TRANSACTION');
     
     for (let rawRow of data) {
-      // Normalize keys: convert to lowercase and remove spaces
       const row = {};
       for (const key in rawRow) {
         const normalizedKey = key.toLowerCase().replace(/\s+/g, '');
@@ -48,43 +43,55 @@ router.post('/upload', auth, upload.single('file'), async (req, res) => {
 
       const rawValues = Object.values(rawRow);
 
-      // Check for Hostel ID (hostelid, id, rollno) OR fallback to Column 1
       const parsedHostelId = row.hostelid || row.id || row.rollno || rawValues[0];
-      // Check for Student Name (studentname, name) OR fallback to Column 2
       const parsedStudentName = row.studentname || row.name || row.student || rawValues[1];
 
       if (!parsedHostelId || !parsedStudentName) {
-        console.log("Skipping invalid row:", rawRow);
         continue;
       }
       
       const hostelIdStr = String(parsedHostelId);
-      const existing = await db.get('SELECT id FROM students WHERE hostelId = ?', [hostelIdStr]);
+      const existing = await Student.findOne({ hostelId: hostelIdStr });
       
       if (!existing) {
-        await db.run(
-          `INSERT INTO students (hostelId, studentName, college, year, courseType, branch, roomNo, phoneNumber) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            hostelIdStr, 
-            parsedStudentName, 
-            row.college || rawValues[2] || 'Unknown', 
-            row.year ? parseInt(row.year, 10) : 1, 
-            row.coursetype || row.course || rawValues[3] || 'B.Tech', 
-            row.branch || rawValues[4] || 'N/A', 
-            row.roomno || row.room ? String(row.roomno || row.room) : '', 
-            row.phonenumber || row.phone ? String(row.phonenumber || row.phone) : ''
-          ]
-        );
+        const student = new Student({
+          hostelId: hostelIdStr,
+          studentName: parsedStudentName,
+          college: row.college || rawValues[2] || 'Unknown',
+          year: row.year ? String(row.year) : '1',
+          courseType: row.coursetype || row.course || rawValues[3] || 'B.Tech',
+          roomNo: row.roomno || row.room ? String(row.roomno || row.room) : 'N/A',
+          phoneNumber: row.phonenumber || row.phone ? String(row.phonenumber || row.phone) : 'N/A'
+        });
+        await student.save();
         addedCount++;
       }
     }
 
-    await db.exec('COMMIT');
     res.json({ msg: `Successfully imported ${addedCount} students.` });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error processing Excel file');
+  }
+});
+
+// @route   DELETE api/students/:id
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    // Delete attendance records for this student first to avoid orphaned data
+    await Attendance.deleteMany({ studentId: req.params.id });
+    
+    // Delete the student
+    const result = await Student.findByIdAndDelete(req.params.id);
+    
+    if (!result) {
+      return res.status(404).json({ msg: 'Student not found' });
+    }
+    
+    res.json({ msg: 'Student removed successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 

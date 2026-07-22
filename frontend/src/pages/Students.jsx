@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { Upload, Search } from 'lucide-react';
+import { Upload, Search, Trash2 } from 'lucide-react';
 
 const Students = () => {
   const [students, setStudents] = useState([]);
@@ -44,6 +44,19 @@ const Students = () => {
       setMessage({ type: 'error', text: err.response?.data?.msg || 'Failed to upload Excel file.' });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDeleteStudent = async (id, name) => {
+    if (window.confirm(`Are you sure you want to completely remove ${name}? This will also delete their attendance history.`)) {
+      try {
+        await api.delete(`/students/${id}`);
+        setMessage({ type: 'success', text: `${name} has been removed.` });
+        fetchStudents(); // Refresh the list
+      } catch (err) {
+        console.error(err);
+        setMessage({ type: 'error', text: err.response?.data?.msg || 'Failed to delete student.' });
+      }
     }
   };
 
@@ -97,12 +110,13 @@ const Students = () => {
                   <th className="p-4 font-semibold text-gray-600">Course</th>
                   <th className="p-4 font-semibold text-gray-600">Room No</th>
                   <th className="p-4 font-semibold text-gray-600">Phone</th>
+                  <th className="p-4 font-semibold text-gray-600 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-gray-500">No students found.</td>
+                    <td colSpan="7" className="p-8 text-center text-gray-500">No students found.</td>
                   </tr>
                 ) : (
                   filteredStudents.map((student) => (
@@ -113,6 +127,15 @@ const Students = () => {
                       <td className="p-4">{student.courseType} (Yr {student.year})</td>
                       <td className="p-4">{student.roomNo}</td>
                       <td className="p-4">{student.phoneNumber}</td>
+                      <td className="p-4 text-right">
+                        <button 
+                          onClick={() => handleDeleteStudent(student._id, student.studentName)}
+                          className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded transition-colors"
+                          title="Delete Student"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}

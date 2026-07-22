@@ -40,23 +40,15 @@ const Contact = () => {
     setStatus({ type: '', text: '' });
 
     try {
-      const apiUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
-      const res = await fetch(`${apiUrl}/api/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      await addDoc(collection(db, 'messages'), {
+        ...formData,
+        createdAt: new Date().toISOString()
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setStatus({ type: 'success', text: 'Thank you! Your message has been sent successfully.' });
-        setFormData({ name: '', email: '', message: '' });
-      } else {
-        setStatus({ type: 'error', text: data.error || 'Failed to send message.' });
-      }
+      
+      setStatus({ type: 'success', text: 'Thank you! Your message has been sent successfully.' });
+      setFormData({ name: '', email: '', message: '' });
     } catch (err) {
-      setStatus({ type: 'error', text: 'Network error. Make sure the backend server is running.' });
+      setStatus({ type: 'error', text: 'Network error. Please try again later.' });
     } finally {
       setIsLoading(false);
     }
