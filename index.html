@@ -6,10 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Kamma Vidyarthi Sahaya Sangam - A premium residential facility for boys in Guntur, Andhra Pradesh. We provide a safe, nurturing, and comfortable environment for academic excellence." />
     <title>కమ్మ విద్యార్థి సహాయ సంఘం | Kamma Vidyarthi Sahaya Sangam</title>
-    <script type="module" crossorigin src="./assets/index-C4f1d_UW.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DU_8S7Bo.css">
+    <script type="module" crossorigin src="./assets/index-iLvvDIgm.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BEiW9G4D.css">
   </head>
   <body>
+    <div id="tsparticles" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
     <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+    <script>
+      tsParticles.load("tsparticles", {
+        background: { color: { value: "#f7fafc" } },
+        fpsLimit: 120,
+        interactivity: {
+          events: { onHover: { enable: true, mode: "grab" }, resize: true },
+          modes: { grab: { distance: 140, links: { opacity: 1 } } }
+        },
+        particles: {
+          color: { value: "#1a365d" },
+          links: { color: "#d4af37", distance: 150, enable: true, opacity: 0.5, width: 1 },
+          move: { enable: true, speed: 2, outModes: { default: "bounce" } },
+          number: { density: { enable: true, area: 800 }, value: 80 },
+          opacity: { value: 0.5 },
+          shape: { type: "circle" },
+          size: { value: { min: 1, max: 5 } }
+        },
+        detectRetina: true
+      });
+    </script>
   </body>
 </html>
